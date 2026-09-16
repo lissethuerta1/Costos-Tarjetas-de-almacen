@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Tarjetas de Almacén</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
+
+    <!-- LOGIN -->
+    <div id="login-screen" class="flex items-center justify-center min-h-screen">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md border border-slate-200">
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-bold text-blue-900">Control de Almacén</h1>
+                <p class="text-sm text-slate-500">Sistema Contable de Tarjetas de Almacén</p>
+            </div>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Usuario</label>
+                    <input type="text" id="username" value="admin" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-800 focus:outline-none" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Contraseña</label>
+                    <input type="password" id="password" value="1234" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-800 focus:outline-none" required>
+                </div>
+                <div id="login-error" class="text-red-600 text-xs hidden">Credenciales incorrectas (Usa: admin / 1234)</div>
+                <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2 rounded shadow transition">Ingresar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="app-screen" class="hidden">
+        <nav class="bg-blue-900 text-white px-6 py-4 flex justify-between items-center shadow-md">
+            <div>
+                <h1 class="text-xl font-bold tracking-wide">Sistema de Tarjetas de Almacén</h1>
+                <p class="text-xs text-blue-200">PEPS | UEPS | Precio Promedio</p>
+            </div>
+            <button id="logout-btn" class="text-sm bg-blue-800 hover:bg-blue-700 px-3 py-1.5 rounded transition">Cerrar Sesión</button>
+        </nav>
+
+        <main class="max-w-7xl mx-auto p-6 space-y-6">
+            
+            <!-- ALTA PRODUCTO -->
+            <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
+                <h2 class="text-base font-bold text-blue-900 mb-4 border-b pb-2">1. Registrar Producto</h2>
+                <form id="product-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Nombre del Producto</label>
+                        <input type="text" id="prod-name" placeholder="Ej. Azúcar" class="w-full p-2 border rounded text-sm" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Unidad de Medida</label>
+                        <input type="text" id="prod-unit" placeholder="Ej. kg, Toneladas" class="w-full p-2 border rounded text-sm" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Método de Valuación</label>
+                        <select id="prod-method" class="w-full p-2 border rounded text-sm" required>
+                            <option value="PEPS">PEPS</option>
+                            <option value="UEPS">UEPS</option>
+                            <option value="PROMEDIO">Precio Promedio</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2 text-sm rounded transition">Guardar Producto</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- MOVIMIENTOS -->
+            <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
+                <h2 class="text-base font-bold text-blue-900 mb-4 border-b pb-2">2. Registrar Movimiento</h2>
+                <form id="movement-form" class="grid grid-cols-1 md:grid-cols-6 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Producto</label>
+                        <select id="mov-product" class="w-full p-2 border rounded text-sm" required></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Fecha</label>
+                        <input type="date" id="mov-date" class="w-full p-2 border rounded text-sm" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Referencia</label>
+                        <input type="text" id="mov-ref" placeholder="Ej. SA750/70" class="w-full p-2 border rounded text-sm" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Concepto / Proveedor</label>
+                        <input type="text" id="mov-concept" placeholder="Ej. TP-90" class="w-full p-2 border rounded text-sm" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Operación</label>
+                        <select id="mov-type" class="w-full p-2 border rounded text-sm" required>
+                            <option value="ENTRADA">Entrada</option>
+                            <option value="SALIDA">Salida</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Cantidad</label>
+                        <input type="number" step="0.01" min="0.01" id="mov-qty" placeholder="0.00" class="w-full p-2 border rounded text-sm" required>
+                    </div>
+                    <div id="cost-container" class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Costo Unitario ($)</label>
+                        <input type="number" step="0.01" min="0.01" id="mov-cost" placeholder="0.00" class="w-full p-2 border rounded text-sm">
+                    </div>
+                    <div class="md:col-span-4 flex items-end">
+                        <button type="submit" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 text-sm rounded transition">Procesar Operación</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- SECCIÓN 3: VISTA Y CONSULTA DE TARJETAS DE ALMACÉN -->
+            <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 border-b pb-3 gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-blue-900">Consulta de Tarjetas de Almacén</h2>
+                        <p class="text-xs text-slate-500">Visualiza todas las tarjetas agrupadas por su método de valuación</p>
+                    </div>
+                    
+                    <!-- Pestañas de Filtrado por Método -->
+                    <div class="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                        <button id="tab-TODOS" onclick="filterCards('TODOS')" class="px-3 py-1.5 font-bold text-xs rounded bg-blue-900 text-white transition">Todas</button>
+                        <button id="tab-PEPS" onclick="filterCards('PEPS')" class="px-3 py-1.5 font-bold text-xs rounded text-slate-600 hover:text-blue-900 transition">PEPS</button>
+                        <button id="tab-UEPS" onclick="filterCards('UEPS')" class="px-3 py-1.5 font-bold text-xs rounded text-slate-600 hover:text-blue-900 transition">UEPS</button>
+                        <button id="tab-PROMEDIO" onclick="filterCards('PROMEDIO')" class="px-3 py-1.5 font-bold text-xs rounded text-slate-600 hover:text-blue-900 transition">Promedio</button>
+                    </div>
+                </div>
+
+                <!-- Selector de producto para vista individual rápida -->
+                <div class="mb-4 flex items-center gap-2">
+                    <label class="text-xs font-bold text-slate-600">Filtrar por producto específico:</label>
+                    <select id="card-selector" class="p-1.5 border rounded text-xs font-semibold bg-slate-50 min-w-[200px]">
+                        <option value="ALL">-- Ver Todos los Productos --</option>
+                    </select>
+                </div>
+
+                <!-- CONTENEDOR DINÁMICO DE TARJETAS -->
+                <div id="cards-container" class="space-y-8">
+                    <!-- Las tablas de las tarjetas se generarán aquí mediante JS -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- SDKs de Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDgTCIyEHi7LGTpGUnUrJzQVntbVpZRv38",
+            authDomain: "costos-45bc5.firebaseapp.com",
+            projectId: "costos-45bc5",
+            storageBucket: "costos-45bc5.firebasestorage.app",
+            messagingSenderId: "922266055183",
+            appId: "1:922266055183:web:a8beae80d22ac5b2e1697a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        window.db = getFirestore(app);
+        window.fs = { collection, addDoc, getDocs, query, where, onSnapshot };
+    </script>
+
+    <script src="js/engine.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>
