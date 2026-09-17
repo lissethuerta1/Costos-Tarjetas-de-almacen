@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
             state.user = user;
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-screen').classList.remove('hidden');
-            // Cargar datos iniciales desde Firebase tras iniciar sesión
             loadProductsFromFirebase();
         } else {
             document.getElementById('login-error').classList.remove('hidden');
@@ -50,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            // Guardar en Firestore
             const docRef = await window.fs.addDoc(window.fs.collection(window.db, "productos"), newProduct);
             const productWithId = { id: docRef.id, ...newProduct };
             
@@ -84,10 +82,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            // Guardar en Firestore
             await window.fs.addDoc(window.fs.collection(window.db, "movimientos"), movement);
             document.getElementById('movement-form').reset();
-            // Recargar movimientos del producto y renderizar vista
             await loadMovementsFromFirebase(prodId);
             renderAllCards();
         } catch (error) {
@@ -113,7 +109,6 @@ async function loadProductsFromFirebase() {
 
         updateProductDropdowns();
 
-        // Cargar movimientos para todos los productos en paralelo
         for (const p of state.products) {
             await loadMovementsFromFirebase(p.id);
         }
@@ -124,7 +119,7 @@ async function loadProductsFromFirebase() {
     }
 }
 
-// Lectura de movimientos de un producto específico desde Firestore
+// Lectura de movimientos desde Firestore
 async function loadMovementsFromFirebase(productId) {
     try {
         const q = window.fs.query(
@@ -138,18 +133,16 @@ async function loadMovementsFromFirebase(productId) {
             state.movements[productId].push(doc.data());
         });
 
-        // Ordenar los movimientos cronológicamente según la fecha registrada
         state.movements[productId].sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
     } catch (error) {
         console.error("Error al cargar movimientos:", error);
     }
 }
 
-// Filtrado de productos y tarjetas por pestañas de método (PEPS, UEPS, PROMEDIO)
+// Filtrado por pestañas de método
 window.filterCards = function(metodo) {
     currentMethodFilter = metodo;
 
-    // Actualizar estilos visuales de los botones de pestañas
     ['TODOS', 'PEPS', 'UEPS', 'PROMEDIO'].forEach(m => {
         const btn = document.getElementById(`tab-${m}`);
         if (btn) {
@@ -172,12 +165,10 @@ function updateProductDropdowns() {
     movProductSelect.innerHTML = '';
     cardSelector.innerHTML = '<option value="ALL">-- Ver Todos los Productos --</option>';
 
-    // Selector de captura (lista todos los productos existentes)
     state.products.forEach(p => {
         movProductSelect.add(new Option(`${p.name} (${p.metodo})`, p.id));
     });
 
-    // Selector de vista rápida (filtra productos según la pestaña activa)
     const filteredProducts = currentMethodFilter === 'TODOS'
         ? state.products
         : state.products.filter(p => p.metodo === currentMethodFilter);
@@ -187,17 +178,15 @@ function updateProductDropdowns() {
     });
 }
 
-// Renderiza MÚLTIPLES TARJETAS simultáneamente en pantalla
+// Renderiza MÚLTIPLES TARJETAS en pantalla
 async function renderAllCards(singleProductId = null) {
     const container = document.getElementById('cards-container');
     if (!container) return;
 
-    // Filtrar la lista de productos a mostrar según el método seleccionado
     let productsToRender = currentMethodFilter === 'TODOS'
         ? state.products
         : state.products.filter(p => p.metodo === currentMethodFilter);
 
-    // Si se especificó un producto concreto mediante el dropdown
     if (singleProductId && singleProductId !== 'ALL') {
         productsToRender = productsToRender.filter(p => p.id === singleProductId);
     }
@@ -210,9 +199,8 @@ async function renderAllCards(singleProductId = null) {
         return;
     }
 
-    container.innerHTML = ''; // Limpiar contenedor principal
+    container.innerHTML = '';
 
-    // Generar la tarjeta (Header + Tabla de 9 columnas + Totales) para cada producto coincidente
     for (const product of productsToRender) {
         if (!state.movements[product.id]) {
             await loadMovementsFromFirebase(product.id);
@@ -242,7 +230,6 @@ async function renderAllCards(singleProductId = null) {
         });
 
         cardWrapper.innerHTML = `
-            <!-- Encabezado de la Tarjeta Individual -->
             <div class="bg-slate-100 px-4 py-3 border-b border-slate-300 flex justify-between items-center">
                 <div>
                     <h3 class="font-bold text-base text-blue-900">${product.name}</h3>
@@ -254,7 +241,6 @@ async function renderAllCards(singleProductId = null) {
                 </div>
             </div>
 
-            <!-- Tabla de 9 columnas -->
             <div class="overflow-x-auto">
                 <table class="w-full border-collapse border border-slate-300 text-xs text-center">
                     <thead class="bg-blue-900 text-white font-bold">
@@ -288,4 +274,86 @@ async function renderAllCards(singleProductId = null) {
 
         container.appendChild(cardWrapper);
     }
+}
+
+// LÓGICA DEL ESCÁNER CÁMARA WEBCAM
+let html5QrCode = null;
+let isScannerActive = false;
+
+window.toggleCameraScanner = function() {
+    const wrapper = document.getElementById('scanner-wrapper');
+    const btn = document.getElementById('toggle-scanner-btn');
+
+    if (!isScannerActive) {
+        wrapper.classList.remove('hidden');
+        btn.innerText = "Cerrar Cámara Escáner";
+        btn.className = "bg-red-700 hover:bg-red-800 text-white font-bold text-xs px-3 py-2 rounded transition";
+
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            onCodeScanned
+        ).catch(err => {
+            console.error("Error al iniciar cámara:", err);
+            alert("No se pudo acceder a la cámara web.");
+        });
+
+        isScannerActive = true;
+    } else {
+        stopScanner();
+    }
+};
+
+function stopScanner() {
+    if (html5QrCode && isScannerActive) {
+        html5QrCode.stop().then(() => {
+            document.getElementById('scanner-wrapper').classList.add('hidden');
+            const btn = document.getElementById('toggle-scanner-btn');
+            btn.innerText = "Activar Cámara Escáner";
+            btn.className = "bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs px-3 py-2 rounded transition";
+            isScannerActive = false;
+        });
+    }
+}
+
+function onCodeScanned(decodedText) {
+    try {
+        const data = JSON.parse(decodedText);
+
+        if (data.type === "PRODUCTO") {
+            document.getElementById('prod-name').value = data.name || '';
+            document.getElementById('prod-unit').value = data.unit || '';
+            document.getElementById('prod-method').value = data.metodo || 'PEPS';
+            alert(`Producto detectado: ${data.name}. Revisa y guarda los datos.`);
+
+        } else if (data.type === "FACTURA" || data.ref) {
+            const targetProd = state.products.find(p => p.name.toLowerCase() === (data.productName || '').toLowerCase());
+
+            if (targetProd) {
+                document.getElementById('mov-product').value = targetProd.id;
+            }
+
+            document.getElementById('mov-date').value = data.fecha || new Date().toISOString().split('T')[0];
+            document.getElementById('mov-ref').value = data.ref || '';
+            document.getElementById('mov-concept').value = data.concepto || '';
+            document.getElementById('mov-type').value = data.tipo || 'ENTRADA';
+            document.getElementById('mov-qty').value = data.cantidad || 0;
+
+            if (data.tipo === 'ENTRADA') {
+                const costInput = document.getElementById('mov-cost');
+                const costContainer = document.getElementById('cost-container');
+                costContainer.classList.remove('opacity-40', 'pointer-events-none');
+                costInput.value = data.costo || 0;
+            }
+
+            alert(`Factura detectada (${data.ref}). Se autocompletaron los campos del movimiento.`);
+        }
+
+    } catch (e) {
+        document.getElementById('prod-name').value = decodedText;
+        alert(`Código de producto detectado: ${decodedText}`);
+    }
+
+    stopScanner();
 }

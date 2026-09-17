@@ -6,6 +6,7 @@
     <title>Sistema de Tarjetas de Almacén</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
 
@@ -42,6 +43,24 @@
         </nav>
 
         <main class="max-w-7xl mx-auto p-6 space-y-6">
+            
+            <!-- SECCIÓN DE ESCÁNER CÁMARA WEBCAM -->
+            <section class="bg-white p-5 rounded-lg shadow border border-blue-200">
+                <div class="flex justify-between items-center mb-3">
+                    <div>
+                        <h2 class="text-base font-bold text-blue-900">Escáner de Código de Barras / QR</h2>
+                        <p class="text-xs text-slate-500">Escanea un producto para autocompletar alta o un QR de Factura para registrar un movimiento</p>
+                    </div>
+                    <button id="toggle-scanner-btn" onclick="toggleCameraScanner()" class="bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs px-3 py-2 rounded transition">
+                        Activar Cámara Escáner
+                    </button>
+                </div>
+                
+                <!-- Visor de la cámara oculto por defecto -->
+                <div id="scanner-wrapper" class="hidden max-w-sm mx-auto border-2 border-dashed border-blue-400 p-2 rounded">
+                    <div id="reader" class="w-full"></div>
+                </div>
+            </section>
             
             <!-- ALTA PRODUCTO -->
             <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
