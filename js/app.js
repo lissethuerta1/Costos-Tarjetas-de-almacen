@@ -1,74 +1,90 @@
 const state = {
     user: null,
     products: [],
-    movements: {}
+    workers: [],
+    processes: [],
+    movements: {},
+    globalMethod: 'PEPS'
 };
 
-let currentMethodFilter = 'TODOS';
-
 document.addEventListener('DOMContentLoaded', () => {
-    // Autenticación Sencilla
-    document.getElementById('login-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const user = document.getElementById('username').value;
-        const pass = document.getElementById('password').value;
+    // 1. LOGIN
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
 
-        if (user === 'admin' && pass === '1234') {
-            state.user = user;
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('app-screen').classList.remove('hidden');
-            loadProductsFromFirebase();
-        } else {
-            document.getElementById('login-error').classList.remove('hidden');
-        }
+            if (user === 'admin' && pass === '1234') {
+                state.user = user;
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                
+                loadProductsFromFirebase();
+                loadWorkersFromFirebase();
+                loadProcessesFromFirebase();
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
+            }
+        });
+    }
+
+    document.getElementById('logout-btn')?.addEventListener('click', () => location.reload());
+
+    // 2. CONFIGURACIÓN GENERAL
+    document.getElementById('config-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        state.globalMethod = document.getElementById('cfg-metodo-global').value;
+        const badge = document.getElementById('active-method-badge');
+        if (badge) badge.innerText = `Método Activo: ${state.globalMethod}`;
+        
+        renderAllCards();
+        actualizarCedulaProducto();
+        alert(`Configuración guardada. El método institucional de inventario ahora es ${state.globalMethod}.`);
     });
 
-    document.getElementById('logout-btn').addEventListener('click', () => location.reload());
-
-    // Ocultar campo costo en salidas
+    // 3. OCULTAR COSTO EN SALIDAS
     const movTypeSelect = document.getElementById('mov-type');
     const costContainer = document.getElementById('cost-container');
-    movTypeSelect.addEventListener('change', (e) => {
+    movTypeSelect?.addEventListener('change', (e) => {
         if (e.target.value === 'SALIDA') {
-            costContainer.classList.add('opacity-40', 'pointer-events-none');
-            document.getElementById('mov-cost').removeAttribute('required');
+            costContainer?.classList.add('opacity-40', 'pointer-events-none');
+            document.getElementById('mov-cost')?.removeAttribute('required');
         } else {
-            costContainer.classList.remove('opacity-40', 'pointer-events-none');
-            document.getElementById('mov-cost').setAttribute('required', 'true');
+            costContainer?.classList.remove('opacity-40', 'pointer-events-none');
+            document.getElementById('mov-cost')?.setAttribute('required', 'true');
         }
     });
 
-    // Alta de Producto guardando en Firebase
-    document.getElementById('product-form').addEventListener('submit', async (e) => {
+    // 4. ALTA DE INSUMO
+    document.getElementById('product-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const newProduct = {
-            name: document.getElementById('prod-name').value,
-            unit: document.getElementById('prod-unit').value,
-            metodo: document.getElementById('prod-method').value,
+            name: document.getElementById('prod-name').value.trim(),
+            unit: document.getElementById('prod-unit').value.trim(),
             createdAt: new Date()
         };
 
         try {
             const docRef = await window.fs.addDoc(window.fs.collection(window.db, "productos"), newProduct);
-            const productWithId = { id: docRef.id, ...newProduct };
-            
-            state.products.push(productWithId);
+            state.products.push({ id: docRef.id, ...newProduct });
             state.movements[docRef.id] = [];
             
             document.getElementById('product-form').reset();
             updateProductDropdowns();
             renderAllCards();
+            actualizarCedulaProducto();
         } catch (error) {
             console.error("Error al guardar producto:", error);
-            alert("No se pudo guardar el producto en la base de datos.");
         }
     });
 
-    // Registro de Movimiento guardando en Firebase
-    document.getElementById('movement-form').addEventListener('submit', async (e) => {
+    // 5. REGISTRO DE MOVIMIENTOS
+    document.getElementById('movement-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const prodId = document.getElementById('mov-product').value;
-        if (!prodId) return alert("Selecciona un producto.");
+        if (!prodId) return alert("Selecciona un insumo.");
 
         const movement = {
             productId: prodId,
@@ -86,19 +102,208 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('movement-form').reset();
             await loadMovementsFromFirebase(prodId);
             renderAllCards();
+            actualizarCedulaProducto();
         } catch (error) {
             console.error("Error al guardar movimiento:", error);
-            alert("No se pudo registrar el movimiento.");
         }
     });
 
-    // Selector manual para filtrado rápido por producto específico
-    document.getElementById('card-selector').addEventListener('change', (e) => {
-        renderAllCards(e.target.value);
+    // 6. REGISTRO DE PROCESOS/ESTACIONES
+    document.getElementById('process-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('proc-name').value.trim();
+        const machine = document.getElementById('proc-machine').value.trim();
+        const time = parseFloat(document.getElementById('proc-time').value);
+
+        const newProc = {
+            name,
+            machine,
+            time,
+            assignedWorkerId: null,
+            createdAt: new Date()
+        };
+
+        try {
+            const docRef = await window.fs.addDoc(window.fs.collection(window.db, "procesos"), newProc);
+            state.processes.push({ id: docRef.id, ...newProc });
+            document.getElementById('process-form').reset();
+            renderProcesosModule();
+            actualizarCedulaProducto();
+        } catch (error) {
+            console.error("Error al guardar proceso:", error);
+        }
     });
 });
 
-// Lectura de productos desde Firestore
+// NAVEGACIÓN DE MÓDULOS
+window.switchModule = function(moduleName) {
+    ['config', 'mp', 'mo', 'procesos', 'reportes'].forEach(m => {
+        const mod = document.getElementById(`module-${m}`);
+        if (mod) mod.classList.add('hidden');
+        
+        const btn = document.getElementById(`nav-${m}`);
+        if (btn) btn.className = "px-3 py-1.5 text-xs font-bold rounded transition text-blue-200 hover:text-white";
+    });
+
+    const activeMod = document.getElementById(`module-${moduleName}`);
+    if (activeMod) activeMod.classList.remove('hidden');
+
+    const activeBtn = document.getElementById(`nav-${moduleName}`);
+    if (activeBtn) activeBtn.className = "px-3 py-1.5 text-xs font-bold rounded transition bg-blue-800 text-white";
+
+    if (moduleName === 'procesos') renderProcesosModule();
+    if (moduleName === 'reportes') actualizarCedulaProducto();
+};
+
+// MÓDULO DE PROCESOS: RENDERIZADO Y ASIGNACIÓN
+function renderProcesosModule() {
+    const container = document.getElementById('procesos-list-container');
+    if (!container) return;
+
+    if (state.processes.length === 0) {
+        container.innerHTML = `<p class="col-span-2 text-center text-slate-400 p-4 border border-dashed rounded">No hay procesos o estaciones registradas.</p>`;
+        return;
+    }
+
+    let htmlOperadoresOpts = '<option value="">-- Sin Operador Asignado --</option>';
+    state.workers.forEach(w => {
+        htmlOperadoresOpts += `<option value="${w.id}">${w.name} (CHH: $${w.chh.toFixed(2)})</option>`;
+    });
+
+    let htmlCards = '';
+    state.processes.forEach((proc, index) => {
+        let opts = htmlOperadoresOpts;
+        if (proc.assignedWorkerId) {
+            opts = opts.replace(`value="${proc.assignedWorkerId}"`, `value="${proc.assignedWorkerId}" selected`);
+        }
+
+        htmlCards += `
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3">
+                <div class="flex justify-between items-center border-b pb-2">
+                    <div>
+                        <span class="font-bold text-blue-900 text-sm">${index + 1}. ${proc.name}</span>
+                        <p class="text-[10px] text-slate-500">Máquina: ${proc.machine}</p>
+                    </div>
+                    <span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-bold">${proc.time} hrs</span>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Operador / Puesto Asignado:</label>
+                    <select onchange="asignarTrabajadorProceso('${proc.id}', this.value)" class="w-full p-2 border rounded text-xs bg-white text-slate-800 font-semibold">
+                        ${opts}
+                    </select>
+                </div>
+            </div>`;
+    });
+
+    container.innerHTML = htmlCards;
+}
+
+window.asignarTrabajadorProceso = function(processId, workerId) {
+    const proc = state.processes.find(p => p.id === processId);
+    if (proc) {
+        proc.assignedWorkerId = workerId || null;
+        actualizarCedulaProducto();
+    }
+};
+
+// CÉDULA DE INTEGRACIÓN DINÁMICA
+window.actualizarCedulaProducto = function() {
+    const selectElem = document.getElementById('select-producto-costeo');
+    if (!selectElem) return;
+
+    const key = selectElem.value;
+
+    function getCostoMP(keywords, defaultVal) {
+        const prod = state.products.find(p => keywords.some(k => p.name.toLowerCase().includes(k.toLowerCase())));
+        if (!prod) return defaultVal;
+
+        const movs = state.movements[prod.id] || [];
+        const entradas = movs.filter(m => m.tipo === 'ENTRADA' && m.costoUnitario > 0);
+        return entradas.length > 0 ? entradas[entradas.length - 1].costoUnitario : defaultVal;
+    }
+
+    const recetasMP = {
+        lente: [
+            { nombre: "Micas Orgánicas CR-39", tipo: "MPD", cantidadTexto: "1 Par", factor: 1.0, ctoUnit: getCostoMP(["Mica", "CR-39"], 120.00) },
+            { nombre: "Armazón de Acetato", tipo: "MPD", cantidadTexto: "1 Pza", factor: 1.0, ctoUnit: getCostoMP(["Armazón", "Acetato"], 85.00) },
+            { nombre: "Estuche y Microfibra", tipo: "MPI", cantidadTexto: "1 Juego", factor: 1.0, ctoUnit: getCostoMP(["Estuche"], 15.00) }
+        ],
+        armazon: [
+            { nombre: "Pellets de Acetato de Celulosa", tipo: "MPD", cantidadTexto: "0.25 Kg", factor: 0.25, ctoUnit: getCostoMP(["Acetato"], 112.00) },
+            { nombre: "Alma Metálica y Bisagras", tipo: "MPD", cantidadTexto: "1 Juego", factor: 1.0, ctoUnit: getCostoMP(["Bisagras"], 15.00) },
+            { nombre: "Empaque Individual Bolsa", tipo: "MPI", cantidadTexto: "1 Pza", factor: 1.0, ctoUnit: getCostoMP(["Bolsa"], 2.00) }
+        ],
+        kit: [
+            { nombre: "Solución Limpiadora 60ml", tipo: "MPD", cantidadTexto: "1 Frasco", factor: 1.0, ctoUnit: getCostoMP(["Solución"], 12.00) },
+            { nombre: "Paño Microfibra", tipo: "MPD", cantidadTexto: "1 Pza", factor: 1.0, ctoUnit: getCostoMP(["Paño"], 6.00) },
+            { nombre: "Estuche Rígido con Cierre", tipo: "MPD", cantidadTexto: "1 Pza", factor: 1.0, ctoUnit: getCostoMP(["Estuche"], 15.00) }
+        ]
+    };
+
+    // 1. RENDER MATERIA PRIMA
+    const tbodyMP = document.getElementById('tb-cedula-mp');
+    let totalMP = 0;
+    if (tbodyMP) {
+        tbodyMP.innerHTML = '';
+        const listMP = recetasMP[key] || [];
+
+        listMP.forEach(item => {
+            const subtotal = item.ctoUnit * item.factor;
+            totalMP += subtotal;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="border border-slate-300 p-2 text-left font-medium">${item.nombre}</td>
+                <td class="border border-slate-300 p-2 font-bold ${item.tipo === 'MPD' ? 'text-blue-900' : 'text-amber-700'}">${item.tipo}</td>
+                <td class="border border-slate-300 p-2">${item.cantidadTexto}</td>
+                <td class="border border-slate-300 p-2">$${item.ctoUnit.toFixed(2)}</td>
+                <td class="border border-slate-300 p-2 font-bold">$${subtotal.toFixed(2)}</td>`;
+            tbodyMP.appendChild(tr);
+        });
+
+        const lblMP = document.getElementById('lbl-cedula-total-mp');
+        if (lblMP) lblMP.innerText = `$${totalMP.toFixed(2)}`;
+    }
+
+    // 2. RENDER MANO DE OBRA CON PROCESOS Y TRABAJADORES
+    const tbodyMO = document.getElementById('tb-cedula-mo');
+    let totalMO = 0;
+
+    if (tbodyMO) {
+        tbodyMO.innerHTML = '';
+
+        if (state.processes.length === 0) {
+            tbodyMO.innerHTML = `<tr><td colspan="5" class="p-3 text-slate-400">No hay procesos configurados. Ve al módulo "Procesos y Operadores".</td></tr>`;
+        } else {
+            state.processes.forEach(proc => {
+                const worker = state.workers.find(w => w.id === proc.assignedWorkerId);
+                const workerName = worker ? worker.name : '<span class="text-amber-600 font-semibold">Sin Asignar (CHH Base)</span>';
+                const chhVal = worker ? worker.chh : 35.82;
+                const subtotal = proc.time * chhVal;
+                totalMO += subtotal;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="border border-slate-300 p-2 text-left font-bold text-blue-900">${proc.name} (${proc.machine})</td>
+                    <td class="border border-slate-300 p-2 text-left">${workerName}</td>
+                    <td class="border border-slate-300 p-2">${proc.time} hrs</td>
+                    <td class="border border-slate-300 p-2">$${chhVal.toFixed(2)}</td>
+                    <td class="border border-slate-300 p-2 font-bold">$${subtotal.toFixed(2)}</td>`;
+                tbodyMO.appendChild(tr);
+            });
+        }
+
+        const lblMO = document.getElementById('lbl-cedula-total-mo');
+        if (lblMO) lblMO.innerText = `$${totalMO.toFixed(2)}`;
+    }
+
+    // 3. RESUMEN COSTO FINAL
+    const costoFinal = totalMP + totalMO;
+    const lblCostoFinal = document.getElementById('lbl-cedula-costo-final');
+    if (lblCostoFinal) lblCostoFinal.innerText = `$${costoFinal.toFixed(2)} MXN`;
+};
+
+// FIRESTORE: CARGA Y PERSISTENCIA
 async function loadProductsFromFirebase() {
     try {
         const querySnapshot = await window.fs.getDocs(window.fs.collection(window.db, "productos"));
@@ -114,12 +319,61 @@ async function loadProductsFromFirebase() {
         }
 
         renderAllCards();
+        actualizarCedulaProducto();
     } catch (error) {
-        console.error("Error al cargar productos desde Firebase:", error);
+        console.error("Error al cargar productos:", error);
     }
 }
 
-// Lectura de movimientos desde Firestore
+async function loadWorkersFromFirebase() {
+    try {
+        const querySnapshot = await window.fs.getDocs(window.fs.collection(window.db, "trabajadores"));
+        state.workers = [];
+        const tbody = document.getElementById('workers-table-body');
+        if (tbody) tbody.innerHTML = '';
+
+        querySnapshot.forEach((doc) => {
+            const w = { id: doc.id, ...doc.data() };
+            state.workers.push(w);
+
+            if (tbody) {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-300";
+                tr.innerHTML = `
+                    <td class="p-2 border font-bold text-left">${w.name}</td>
+                    <td class="p-2 border">$${w.dailyWage.toFixed(2)}</td>
+                    <td class="p-2 border">$${w.sueldoAnual.toFixed(2)}</td>
+                    <td class="p-2 border">$${w.subtotalLey.toFixed(2)}</td>
+                    <td class="p-2 border">$${w.cargasPatronales.toFixed(2)}</td>
+                    <td class="p-2 border">$${w.salarioIntegradoAnual.toFixed(2)}</td>
+                    <td class="p-2 border bg-slate-100 font-bold">$${w.salarioIntegradoDiario.toFixed(2)}</td>
+                    <td class="p-2 border bg-emerald-100 text-emerald-900 font-extrabold">$${w.chh.toFixed(2)}</td>`;
+                tbody.appendChild(tr);
+            }
+        });
+
+        renderProcesosModule();
+        actualizarCedulaProducto();
+    } catch (error) {
+        console.error("Error al cargar trabajadores:", error);
+    }
+}
+
+async function loadProcessesFromFirebase() {
+    try {
+        const querySnapshot = await window.fs.getDocs(window.fs.collection(window.db, "procesos"));
+        state.processes = [];
+        querySnapshot.forEach((doc) => {
+            state.processes.push({ id: doc.id, ...doc.data() });
+        });
+
+        renderProcesosModule();
+        actualizarCedulaProducto();
+    } catch (error) {
+        console.error("Error al cargar procesos:", error);
+    }
+}
+
 async function loadMovementsFromFirebase(productId) {
     try {
         const q = window.fs.query(
@@ -139,75 +393,35 @@ async function loadMovementsFromFirebase(productId) {
     }
 }
 
-// Filtrado por pestañas de método
-window.filterCards = function(metodo) {
-    currentMethodFilter = metodo;
-
-    ['TODOS', 'PEPS', 'UEPS', 'PROMEDIO'].forEach(m => {
-        const btn = document.getElementById(`tab-${m}`);
-        if (btn) {
-            if (m === metodo) {
-                btn.className = "px-3 py-1.5 font-bold text-xs rounded bg-blue-900 text-white transition";
-            } else {
-                btn.className = "px-3 py-1.5 font-bold text-xs rounded text-slate-600 hover:text-blue-900 transition";
-            }
-        }
-    });
-
-    updateProductDropdowns();
-    renderAllCards();
-};
-
 function updateProductDropdowns() {
     const movProductSelect = document.getElementById('mov-product');
-    const cardSelector = document.getElementById('card-selector');
+    if (!movProductSelect) return;
 
     movProductSelect.innerHTML = '';
-    cardSelector.innerHTML = '<option value="ALL">-- Ver Todos los Productos --</option>';
-
     state.products.forEach(p => {
-        movProductSelect.add(new Option(`${p.name} (${p.metodo})`, p.id));
-    });
-
-    const filteredProducts = currentMethodFilter === 'TODOS'
-        ? state.products
-        : state.products.filter(p => p.metodo === currentMethodFilter);
-
-    filteredProducts.forEach(p => {
-        cardSelector.add(new Option(`${p.name} (${p.metodo})`, p.id));
+        movProductSelect.add(new Option(`${p.name}`, p.id));
     });
 }
 
-// Renderiza MÚLTIPLES TARJETAS en pantalla
-async function renderAllCards(singleProductId = null) {
+async function renderAllCards() {
     const container = document.getElementById('cards-container');
     if (!container) return;
 
-    let productsToRender = currentMethodFilter === 'TODOS'
-        ? state.products
-        : state.products.filter(p => p.metodo === currentMethodFilter);
-
-    if (singleProductId && singleProductId !== 'ALL') {
-        productsToRender = productsToRender.filter(p => p.id === singleProductId);
-    }
-
-    if (productsToRender.length === 0) {
-        container.innerHTML = `
-            <div class="p-6 text-center border border-dashed border-slate-300 rounded-lg bg-slate-50">
-                <p class="text-sm text-slate-500">No hay tarjetas de almacén registradas bajo el método <strong>${currentMethodFilter}</strong>.</p>
-            </div>`;
+    if (state.products.length === 0) {
+        container.innerHTML = `<div class="p-6 text-center border border-dashed border-slate-300 rounded-lg bg-slate-50"><p class="text-sm text-slate-500">No hay insumos ni tarjetas registradas.</p></div>`;
         return;
     }
 
     container.innerHTML = '';
 
-    for (const product of productsToRender) {
+    for (const product of state.products) {
         if (!state.movements[product.id]) {
             await loadMovementsFromFirebase(product.id);
         }
 
+        const productWithGlobalMethod = { ...product, metodo: state.globalMethod };
         const rawMovements = state.movements[product.id] || [];
-        const { rows, totalDebe, totalHaber, saldoFinal } = InventoryEngine.processMovements(product, rawMovements);
+        const { rows, totalDebe, totalHaber, saldoFinal } = InventoryEngine.processMovements(productWithGlobalMethod, rawMovements);
 
         const cardWrapper = document.createElement('div');
         cardWrapper.className = "border border-slate-300 rounded-lg overflow-hidden shadow-sm bg-white mb-6";
@@ -236,7 +450,7 @@ async function renderAllCards(singleProductId = null) {
                     <p class="text-xs text-slate-500">Unidad de Medida: <span class="font-semibold text-slate-700">${product.unit}</span></p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="px-2.5 py-1 bg-blue-900 text-white font-bold text-xs rounded">${product.metodo}</span>
+                    <span class="px-2.5 py-1 bg-blue-900 text-white font-bold text-xs rounded">${state.globalMethod}</span>
                     <button onclick="window.print()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-1 rounded transition">Imprimir</button>
                 </div>
             </div>
@@ -257,9 +471,7 @@ async function renderAllCards(singleProductId = null) {
                             <th class="border border-slate-300 p-2">Saldo</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-200">
-                        ${rowsHTML || '<tr><td colspan="10" class="p-3 text-slate-400">Sin movimientos registrados</td></tr>'}
-                    </tbody>
+                    <tbody class="divide-y divide-slate-200">${rowsHTML || '<tr><td colspan="10" class="p-3 text-slate-400">Sin movimientos registrados</td></tr>'}</tbody>
                     <tfoot class="bg-slate-100 font-bold border-t-2 border-slate-400">
                         <tr>
                             <td colspan="7" class="border border-slate-300 p-2 text-right">TOTALES / SALDO FINAL:</td>
@@ -269,14 +481,53 @@ async function renderAllCards(singleProductId = null) {
                         </tr>
                     </tfoot>
                 </table>
-            </div>
-        `;
+            </div>`;
 
         container.appendChild(cardWrapper);
     }
 }
 
-// LÓGICA DEL ESCÁNER CÁMARA WEBCAM
+function calculateWorkerCHH(dailyWage) {
+    const diasLab = 302;
+    const jornada = 8;
+    
+    const sueldoAnual = dailyWage * 365;
+    const aguinaldo = dailyWage * 15;
+    const primaVacacional = (dailyWage * 12) * 0.25;
+    const subtotalLey = sueldoAnual + aguinaldo + primaVacacional;
+
+    const comedorAnual = 48 * 19.83 * 12;
+    const valesAnual = 1200 * 12;
+    const eqSeguridad = 1720;
+
+    const cargasPatronales = subtotalLey * 0.14;
+    const salarioIntegradoAnual = subtotalLey + comedorAnual + valesAnual + cargasPatronales + eqSeguridad;
+
+    const salarioIntegradoDiario = salarioIntegradoAnual / diasLab;
+    const chh = salarioIntegradoDiario / jornada;
+
+    return { sueldoAnual, subtotalLey, cargasPatronales, salarioIntegradoAnual, salarioIntegradoDiario, chh };
+}
+
+document.getElementById('worker-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('wrk-name').value;
+    const startDate = document.getElementById('wrk-date').value;
+    const dailyWage = parseFloat(document.getElementById('wrk-wage').value);
+
+    const calc = calculateWorkerCHH(dailyWage);
+    const newWorker = { name, startDate, dailyWage, ...calc, createdAt: new Date() };
+
+    try {
+        await window.fs.addDoc(window.fs.collection(window.db, "trabajadores"), newWorker);
+        document.getElementById('worker-form').reset();
+        await loadWorkersFromFirebase();
+    } catch (error) {
+        console.error("Error al guardar trabajador:", error);
+    }
+});
+
+// ESCÁNER QR
 let html5QrCode = null;
 let isScannerActive = false;
 
@@ -285,19 +536,18 @@ window.toggleCameraScanner = function() {
     const btn = document.getElementById('toggle-scanner-btn');
 
     if (!isScannerActive) {
-        wrapper.classList.remove('hidden');
-        btn.innerText = "Cerrar Cámara Escáner";
-        btn.className = "bg-red-700 hover:bg-red-800 text-white font-bold text-xs px-3 py-2 rounded transition";
+        wrapper?.classList.remove('hidden');
+        if (btn) {
+            btn.innerText = "Cerrar Cámara Escáner";
+            btn.className = "bg-red-700 hover:bg-red-800 text-white font-bold text-xs px-3 py-2 rounded transition";
+        }
 
         html5QrCode = new Html5Qrcode("reader");
         html5QrCode.start(
             { facingMode: "environment" }, 
             { fps: 10, qrbox: { width: 250, height: 250 } },
             onCodeScanned
-        ).catch(err => {
-            console.error("Error al iniciar cámara:", err);
-            alert("No se pudo acceder a la cámara web.");
-        });
+        ).catch(err => console.error("Error cámara:", err));
 
         isScannerActive = true;
     } else {
@@ -308,10 +558,12 @@ window.toggleCameraScanner = function() {
 function stopScanner() {
     if (html5QrCode && isScannerActive) {
         html5QrCode.stop().then(() => {
-            document.getElementById('scanner-wrapper').classList.add('hidden');
+            document.getElementById('scanner-wrapper')?.classList.add('hidden');
             const btn = document.getElementById('toggle-scanner-btn');
-            btn.innerText = "Activar Cámara Escáner";
-            btn.className = "bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs px-3 py-2 rounded transition";
+            if (btn) {
+                btn.innerText = "Activar Cámara Escáner";
+                btn.className = "bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs px-3 py-2 rounded transition";
+            }
             isScannerActive = false;
         });
     }
@@ -324,15 +576,11 @@ function onCodeScanned(decodedText) {
         if (data.type === "PRODUCTO") {
             document.getElementById('prod-name').value = data.name || '';
             document.getElementById('prod-unit').value = data.unit || '';
-            document.getElementById('prod-method').value = data.metodo || 'PEPS';
-            alert(`Producto detectado: ${data.name}. Revisa y guarda los datos.`);
+            alert(`Insumo detectado: ${data.name}.`);
 
         } else if (data.type === "FACTURA" || data.ref) {
             const targetProd = state.products.find(p => p.name.toLowerCase() === (data.productName || '').toLowerCase());
-
-            if (targetProd) {
-                document.getElementById('mov-product').value = targetProd.id;
-            }
+            if (targetProd) document.getElementById('mov-product').value = targetProd.id;
 
             document.getElementById('mov-date').value = data.fecha || new Date().toISOString().split('T')[0];
             document.getElementById('mov-ref').value = data.ref || '';
@@ -343,17 +591,15 @@ function onCodeScanned(decodedText) {
             if (data.tipo === 'ENTRADA') {
                 const costInput = document.getElementById('mov-cost');
                 const costContainer = document.getElementById('cost-container');
-                costContainer.classList.remove('opacity-40', 'pointer-events-none');
-                costInput.value = data.costo || 0;
+                costContainer?.classList.remove('opacity-40', 'pointer-events-none');
+                if (costInput) costInput.value = data.costo || 0;
             }
 
-            alert(`Factura detectada (${data.ref}). Se autocompletaron los campos del movimiento.`);
+            alert(`Factura detectada (${data.ref}). Se autocompletaron los datos.`);
         }
-
     } catch (e) {
-        document.getElementById('prod-name').value = decodedText;
-        alert(`Código de producto detectado: ${decodedText}`);
+        const prodInput = document.getElementById('prod-name');
+        if (prodInput) prodInput.value = decodedText;
     }
-
     stopScanner();
 }

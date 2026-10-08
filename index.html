@@ -3,166 +3,343 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Tarjetas de Almacén</title>
+    <title>Sistema de Costos de Fabricación - Lentes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
 
-    <!-- LOGIN -->
     <div id="login-screen" class="flex items-center justify-center min-h-screen">
         <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md border border-slate-200">
             <div class="text-center mb-6">
-                <h1 class="text-2xl font-bold text-blue-900">Control de Almacén</h1>
-                <p class="text-sm text-slate-500">Sistema Contable de Tarjetas de Almacén</p>
+                <h1 class="text-2xl font-bold text-blue-900">Control de Costos</h1>
+                <p class="text-sm text-slate-500">Fábrica de Óptica y Armazones</p>
             </div>
             <form id="login-form" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Usuario</label>
-                    <input type="text" id="username" value="admin" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-800 focus:outline-none" required>
+                    <input type="text" id="username" value="admin" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-800 focus:outline-none" required>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Contraseña</label>
-                    <input type="password" id="password" value="1234" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-800 focus:outline-none" required>
+                    <input type="password" id="password" value="1234" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-800 focus:outline-none" required>
                 </div>
-                <div id="login-error" class="text-red-600 text-xs hidden">Credenciales incorrectas (Usa: admin / 1234)</div>
-                <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2 rounded shadow transition">Ingresar</button>
+                <div id="login-error" class="text-red-600 text-xs hidden">Credenciales incorrectas (admin / 1234)</div>
+                <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2 rounded shadow transition">Ingresar al Sistema</button>
             </form>
         </div>
     </div>
 
-    <!-- DASHBOARD -->
     <div id="app-screen" class="hidden">
-        <nav class="bg-blue-900 text-white px-6 py-4 flex justify-between items-center shadow-md">
-            <div>
-                <h1 class="text-xl font-bold tracking-wide">Sistema de Tarjetas de Almacén</h1>
-                <p class="text-xs text-blue-200">PEPS | UEPS | Precio Promedio</p>
+        <nav class="bg-blue-900 text-white px-6 py-3 flex justify-between items-center shadow-md sticky top-0 z-50">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl">👓</span>
+                <div>
+                    <h1 class="text-lg font-bold tracking-wide">Fábrica de Lentes - Sistema de Costos</h1>
+                    <p class="text-xs text-blue-200">Contabilidad de Costos (MPD + MOD)</p>
+                </div>
             </div>
-            <button id="logout-btn" class="text-sm bg-blue-800 hover:bg-blue-700 px-3 py-1.5 rounded transition">Cerrar Sesión</button>
+            
+            <div class="flex space-x-2 bg-blue-950 p-1 rounded-lg">
+                <button onclick="switchModule('config')" id="nav-config" class="px-3 py-1.5 text-xs font-bold rounded transition bg-blue-800 text-white">⚙️ Configuración General</button>
+                <button onclick="switchModule('mp')" id="nav-mp" class="px-3 py-1.5 text-xs font-bold rounded transition text-blue-200 hover:text-white">📦 Materia Prima</button>
+                <button onclick="switchModule('mo')" id="nav-mo" class="px-3 py-1.5 text-xs font-bold rounded transition text-blue-200 hover:text-white">👷 Mano de Obra (CHH)</button>
+                <button onclick="switchModule('procesos')" id="nav-procesos" class="px-3 py-1.5 text-xs font-bold rounded transition text-blue-200 hover:text-white">🏭 Procesos y Operadores</button>
+                <button onclick="switchModule('reportes')" id="nav-reportes" class="px-3 py-1.5 text-xs font-bold rounded transition text-blue-200 hover:text-white">📑 Cédula de Integración</button>
+            </div>
+
+            <button id="logout-btn" class="text-xs bg-red-800 hover:bg-red-700 px-3 py-1.5 rounded transition">Salir</button>
         </nav>
 
         <main class="max-w-7xl mx-auto p-6 space-y-6">
-            
-            <!-- SECCIÓN DE ESCÁNER CÁMARA WEBCAM -->
-            <section class="bg-white p-5 rounded-lg shadow border border-blue-200">
-                <div class="flex justify-between items-center mb-3">
-                    <div>
-                        <h2 class="text-base font-bold text-blue-900">Escáner de Código de Barras / QR</h2>
-                        <p class="text-xs text-slate-500">Escanea un producto para autocompletar alta o un QR de Factura para registrar un movimiento</p>
+
+            <div id="module-config" class="space-y-6">
+                <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
+                    <h2 class="text-base font-bold text-blue-900 mb-4 border-b pb-2">⚙️ Parámetros de Configuración General de la Empresa</h2>
+                    <form id="config-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="md:col-span-3 bg-blue-50 p-3 rounded border border-blue-200">
+                            <label class="block text-xs font-bold text-blue-900 mb-1">Método de Valuación Institucional (Único para toda la empresa)</label>
+                            <select id="cfg-metodo-global" class="w-full p-2 border border-blue-300 rounded text-sm font-bold text-blue-900 bg-white">
+                                <option value="PEPS">PEPS (Primeras Entradas, Primeras Salidas)</option>
+                                <option value="UEPS">UEPS (Últimas Entradas, Primeras Salidas)</option>
+                                <option value="PROMEDIO">Precio Promedio Ponderado</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Días Laborados Efectivos al Año</label>
+                            <input type="number" id="cfg-dias-lab" value="302" class="w-full p-2 border rounded text-sm font-bold bg-slate-50" readonly>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Jornada Laboral Diaria (Horas)</label>
+                            <input type="number" id="cfg-jornada" value="8" class="w-full p-2 border rounded text-sm font-bold bg-slate-50" readonly>
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2 text-sm rounded transition">Guardar Configuración</button>
+                        </div>
+                    </form>
+
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Prestaciones de Ley & Conquistas Laborales (Referencia del Excel)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        <div class="p-3 bg-slate-50 border rounded space-y-1">
+                            <p class="font-bold text-blue-900 border-b pb-1">Prestaciones Mínimas LFT</p>
+                            <div class="flex justify-between"><span>Aguinaldo:</span><span class="font-semibold">15 Días</span></div>
+                            <div class="flex justify-between"><span>Vacaciones (Base Ley):</span><span class="font-semibold">12 Días</span></div>
+                            <div class="flex justify-between"><span>Prima Vacacional:</span><span class="font-semibold">25%</span></div>
+                        </div>
+                        <div class="p-3 bg-slate-50 border rounded space-y-1">
+                            <p class="font-bold text-blue-900 border-b pb-1">Conquistas Laborales</p>
+                            <div class="flex justify-between"><span>Comedor (por comida):</span><span class="font-semibold">$48.00</span></div>
+                            <div class="flex justify-between"><span>Vales de Despensa (mensual):</span><span class="font-semibold">$1,200.00</span></div>
+                            <div class="flex justify-between"><span>Equipo de Protección (anual):</span><span class="font-semibold">$1,720.00</span></div>
+                        </div>
+                        <div class="p-3 bg-slate-50 border rounded space-y-1">
+                            <p class="font-bold text-blue-900 border-b pb-1">Previsión Social & Cargas Patronales</p>
+                            <div class="flex justify-between"><span>IMSS:</span><span class="font-semibold">4.00%</span></div>
+                            <div class="flex justify-between"><span>SAR:</span><span class="font-semibold">2.00%</span></div>
+                            <div class="flex justify-between"><span>INFONAVIT:</span><span class="font-semibold">5.00%</span></div>
+                            <div class="flex justify-between"><span>Impuesto s/ Nómina (ISN):</span><span class="font-semibold">3.00%</span></div>
+                        </div>
                     </div>
-                    <button id="toggle-scanner-btn" onclick="toggleCameraScanner()" class="bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs px-3 py-2 rounded transition">
-                        Activar Cámara Escáner
-                    </button>
-                </div>
+                </section>
+            </div>
+
+            <div id="module-mp" class="hidden space-y-6">
+                <section class="bg-white p-5 rounded-lg shadow border border-blue-200">
+                    <div class="flex justify-between items-center mb-3">
+                        <div>
+                            <h2 class="text-base font-bold text-blue-900">Escáner de Código de Barras / QR</h2>
+                            <p class="text-xs text-slate-500">Escanea insumos o facturas para autocompletar</p>
+                        </div>
+                        <button id="toggle-scanner-btn" onclick="toggleCameraScanner()" class="bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs px-3 py-2 rounded transition">
+                            Activar Cámara Escáner
+                        </button>
+                    </div>
+                    <div id="scanner-wrapper" class="hidden max-w-sm mx-auto border-2 border-dashed border-blue-400 p-2 rounded">
+                        <div id="reader" class="w-full"></div>
+                    </div>
+                </section>
                 
-                <!-- Visor de la cámara oculto por defecto -->
-                <div id="scanner-wrapper" class="hidden max-w-sm mx-auto border-2 border-dashed border-blue-400 p-2 rounded">
-                    <div id="reader" class="w-full"></div>
-                </div>
-            </section>
-            
-            <!-- ALTA PRODUCTO -->
-            <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
-                <h2 class="text-base font-bold text-blue-900 mb-4 border-b pb-2">1. Registrar Producto</h2>
-                <form id="product-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Nombre del Producto</label>
-                        <input type="text" id="prod-name" placeholder="Ej. Azúcar" class="w-full p-2 border rounded text-sm" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Unidad de Medida</label>
-                        <input type="text" id="prod-unit" placeholder="Ej. kg, Toneladas" class="w-full p-2 border rounded text-sm" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Método de Valuación</label>
-                        <select id="prod-method" class="w-full p-2 border rounded text-sm" required>
-                            <option value="PEPS">PEPS</option>
-                            <option value="UEPS">UEPS</option>
-                            <option value="PROMEDIO">Precio Promedio</option>
-                        </select>
-                    </div>
-                    <div class="flex items-end">
-                        <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2 text-sm rounded transition">Guardar Producto</button>
-                    </div>
-                </form>
-            </section>
+                <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
+                    <h2 class="text-base font-bold text-blue-900 mb-4 border-b pb-2">1. Registrar Insumo de Lentes</h2>
+                    <form id="product-form" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Insumo</label>
+                            <input type="text" id="prod-name" placeholder="Ej. Micas Orgánicas CR-39" class="w-full p-2 border rounded text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Unidad de Medida</label>
+                            <input type="text" id="prod-unit" placeholder="Ej. Par, Pieza, Juego" class="w-full p-2 border rounded text-sm" required>
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2 text-sm rounded transition">Guardar Insumo</button>
+                        </div>
+                    </form>
+                </section>
 
-            <!-- MOVIMIENTOS -->
-            <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
-                <h2 class="text-base font-bold text-blue-900 mb-4 border-b pb-2">2. Registrar Movimiento</h2>
-                <form id="movement-form" class="grid grid-cols-1 md:grid-cols-6 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Producto</label>
-                        <select id="mov-product" class="w-full p-2 border rounded text-sm" required></select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Fecha</label>
-                        <input type="date" id="mov-date" class="w-full p-2 border rounded text-sm" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Referencia</label>
-                        <input type="text" id="mov-ref" placeholder="Ej. SA750/70" class="w-full p-2 border rounded text-sm" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Concepto / Proveedor</label>
-                        <input type="text" id="mov-concept" placeholder="Ej. TP-90" class="w-full p-2 border rounded text-sm" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Operación</label>
-                        <select id="mov-type" class="w-full p-2 border rounded text-sm" required>
-                            <option value="ENTRADA">Entrada</option>
-                            <option value="SALIDA">Salida</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Cantidad</label>
-                        <input type="number" step="0.01" min="0.01" id="mov-qty" placeholder="0.00" class="w-full p-2 border rounded text-sm" required>
-                    </div>
-                    <div id="cost-container" class="md:col-span-2">
-                        <label class="block text-xs font-bold text-slate-600 mb-1">Costo Unitario ($)</label>
-                        <input type="number" step="0.01" min="0.01" id="mov-cost" placeholder="0.00" class="w-full p-2 border rounded text-sm">
-                    </div>
-                    <div class="md:col-span-4 flex items-end">
-                        <button type="submit" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 text-sm rounded transition">Procesar Operación</button>
-                    </div>
-                </form>
-            </section>
+                <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
+                    <h2 class="text-base font-bold text-blue-900 mb-4 border-b pb-2">2. Registrar Entrada / Salida</h2>
+                    <form id="movement-form" class="grid grid-cols-1 md:grid-cols-6 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Insumo</label>
+                            <select id="mov-product" class="w-full p-2 border rounded text-sm" required></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Fecha</label>
+                            <input type="date" id="mov-date" class="w-full p-2 border rounded text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Referencia</label>
+                            <input type="text" id="mov-ref" placeholder="Ej. F-3010" class="w-full p-2 border rounded text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Concepto / Proveedor</label>
+                            <input type="text" id="mov-concept" placeholder="Ej. Óptica Mayorista" class="w-full p-2 border rounded text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Operación</label>
+                            <select id="mov-type" class="w-full p-2 border rounded text-sm" required>
+                                <option value="ENTRADA">Entrada</option>
+                                <option value="SALIDA">Salida</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Cantidad</label>
+                            <input type="number" step="0.01" min="0.01" id="mov-qty" placeholder="0.00" class="w-full p-2 border rounded text-sm" required>
+                        </div>
+                        <div id="cost-container" class="md:col-span-2">
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Costo Unitario ($)</label>
+                            <input type="number" step="0.01" min="0.01" id="mov-cost" placeholder="0.00" class="w-full p-2 border rounded text-sm">
+                        </div>
+                        <div class="md:col-span-4 flex items-end">
+                            <button type="submit" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 text-sm rounded transition">Procesar Movimiento</button>
+                        </div>
+                    </form>
+                </section>
 
-            <!-- SECCIÓN 3: VISTA Y CONSULTA DE TARJETAS DE ALMACÉN -->
-            <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 border-b pb-3 gap-4">
-                    <div>
-                        <h2 class="text-xl font-bold text-blue-900">Consulta de Tarjetas de Almacén</h2>
-                        <p class="text-xs text-slate-500">Visualiza todas las tarjetas agrupadas por su método de valuación</p>
+                <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-blue-900">Tarjetas de Almacén de Insumos</h2>
+                        <span id="active-method-badge" class="px-3 py-1 bg-blue-900 text-white font-bold text-xs rounded">Método Activo: PEPS</span>
                     </div>
-                    
-                    <!-- Pestañas de Filtrado por Método -->
-                    <div class="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
-                        <button id="tab-TODOS" onclick="filterCards('TODOS')" class="px-3 py-1.5 font-bold text-xs rounded bg-blue-900 text-white transition">Todas</button>
-                        <button id="tab-PEPS" onclick="filterCards('PEPS')" class="px-3 py-1.5 font-bold text-xs rounded text-slate-600 hover:text-blue-900 transition">PEPS</button>
-                        <button id="tab-UEPS" onclick="filterCards('UEPS')" class="px-3 py-1.5 font-bold text-xs rounded text-slate-600 hover:text-blue-900 transition">UEPS</button>
-                        <button id="tab-PROMEDIO" onclick="filterCards('PROMEDIO')" class="px-3 py-1.5 font-bold text-xs rounded text-slate-600 hover:text-blue-900 transition">Promedio</button>
+                    <div id="cards-container" class="space-y-6"></div>
+                </section>
+            </div>
+
+            <div id="module-mo" class="hidden space-y-6">
+                <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
+                    <h2 class="text-base font-bold text-blue-900 mb-4 border-b pb-2">👷 Registrar Operador de Producción</h2>
+                    <form id="worker-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Puesto / Trabajador</label>
+                            <input type="text" id="wrk-name" placeholder="Ej. Oficial de Cizalla 1" class="w-full p-2 border rounded text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Fecha de Ingreso</label>
+                            <input type="date" id="wrk-date" class="w-full p-2 border rounded text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Percepción Diaria Base ($)</label>
+                            <input type="number" step="0.01" id="wrk-wage" placeholder="Ej. 145.00" class="w-full p-2 border rounded text-sm" required>
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2 text-sm rounded transition">Calcular Costo Hora Hombre</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
+                    <h2 class="text-xl font-bold text-blue-900 mb-4">Tabla de Costos de Mano de Obra Directa (MOD)</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse border border-slate-300 text-xs text-center">
+                            <thead class="bg-blue-900 text-white font-bold">
+                                <tr>
+                                    <th class="border border-slate-300 p-2">Trabajador / Puesto</th>
+                                    <th class="border border-slate-300 p-2">Sueldo Diario</th>
+                                    <th class="border border-slate-300 p-2">Sueldo Anual</th>
+                                    <th class="border border-slate-300 p-2">Prestaciones Ley</th>
+                                    <th class="border border-slate-300 p-2">Cargas Patronales</th>
+                                    <th class="border border-slate-300 p-2">Salario Integrado Anual</th>
+                                    <th class="border border-slate-300 p-2 bg-blue-950">Salario Integrado Diario</th>
+                                    <th class="border border-slate-300 p-2 bg-emerald-700 text-white">Costo Hora Hombre (CHH)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="workers-table-body" class="divide-y divide-slate-200"></tbody>
+                        </table>
                     </div>
-                </div>
+                </section>
+            </div>
 
-                <!-- Selector de producto para vista individual rápida -->
-                <div class="mb-4 flex items-center gap-2">
-                    <label class="text-xs font-bold text-slate-600">Filtrar por producto específico:</label>
-                    <select id="card-selector" class="p-1.5 border rounded text-xs font-semibold bg-slate-50 min-w-[200px]">
-                        <option value="ALL">-- Ver Todos los Productos --</option>
-                    </select>
-                </div>
+            <div id="module-procesos" class="hidden space-y-6">
+                <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
+                    <h2 class="text-base font-bold text-blue-900 mb-4 border-b pb-2">🏭 Registrar Nuevo Proceso / Estación de Trabajo</h2>
+                    <form id="process-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Nombre del Proceso</label>
+                            <input type="text" id="proc-name" placeholder="Ej. Biselado CNC" class="w-full p-2 border rounded text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Máquina / Equipo</label>
+                            <input type="text" id="proc-machine" placeholder="Ej. Biseladora 3D" class="w-full p-2 border rounded text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Tiempo Unitario (Horas)</label>
+                            <input type="number" step="0.01" id="proc-time" placeholder="Ej. 0.50" class="w-full p-2 border rounded text-sm" required>
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2 text-sm rounded transition">Guardar Proceso</button>
+                        </div>
+                    </form>
+                </section>
 
-                <!-- CONTENEDOR DINÁMICO DE TARJETAS -->
-                <div id="cards-container" class="space-y-8">
-                    <!-- Las tablas de las tarjetas se generarán aquí mediante JS -->
-                </div>
-            </section>
+                <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
+                    <h2 class="text-xl font-bold text-blue-900 mb-4">Estaciones de Trabajo y Operadores Asignados</h2>
+                    <div id="procesos-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs"></div>
+                </section>
+            </div>
+
+            <div id="module-reportes" class="hidden space-y-6">
+                <section class="bg-white p-6 rounded-lg shadow border border-slate-200">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b pb-4 gap-4">
+                        <div>
+                            <h2 class="text-xl font-extrabold text-blue-900">CÉDULA DE INTEGRACIÓN DEL COSTO DE PRODUCCIÓN</h2>
+                            <p class="text-xs text-slate-500">Cálculo del Costo de Fabricación basado en la Hoja del Excel del Profesor</p>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3 w-full md:w-auto">
+                            <select id="select-producto-costeo" onchange="actualizarCedulaProducto()" class="p-2 border border-blue-900 rounded text-xs font-bold bg-blue-50 text-blue-900">
+                                <option value="lente">👓 Lente Terminado Graduado (CR-39)</option>
+                                <option value="armazon">🕶️ Armazón de Acetato Inyectado</option>
+                                <option value="kit">SOLUCIÓN Y KIT DE LIMPIEZA</option>
+                            </select>
+                            <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3 py-2 rounded transition whitespace-nowrap">
+                                🖨️ Imprimir Cédula
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6 text-xs">
+                        <div>
+                            <h3 class="font-bold text-sm text-blue-900 mb-2 border-b pb-1">1. CONSOLIDADO DE MATERIA PRIMA (MPD / MPI)</h3>
+                            <table class="w-full border-collapse border border-slate-300 text-center">
+                                <thead class="bg-slate-100 font-bold">
+                                    <tr>
+                                        <th class="border border-slate-300 p-2 text-left">Insumo Requerido</th>
+                                        <th class="border border-slate-300 p-2">Tipo</th>
+                                        <th class="border border-slate-300 p-2">Consumo en Unidades</th>
+                                        <th class="border border-slate-300 p-2">Costo Incurred / Unitario</th>
+                                        <th class="border border-slate-300 p-2">Costo Total MP</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tb-cedula-mp"></tbody>
+                                <tfoot class="bg-slate-100 font-bold border-t-2 border-slate-400">
+                                    <tr>
+                                        <td colspan="4" class="border border-slate-300 p-2 text-right">TOTAL MATERIA PRIMA (MPD + MPI):</td>
+                                        <td id="lbl-cedula-total-mp" class="border border-slate-300 p-2 text-blue-900 font-extrabold">$0.00</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <div>
+                            <h3 class="font-bold text-sm text-blue-900 mb-2 border-b pb-1">2. CONSOLIDADO DE MANO DE OBRA DIRECTA (MOD POR PROCESO Y OPERADOR)</h3>
+                            <table class="w-full border-collapse border border-slate-300 text-center">
+                                <thead class="bg-slate-100 font-bold">
+                                    <tr>
+                                        <th class="border border-slate-300 p-2 text-left">Proceso / Estación</th>
+                                        <th class="border border-slate-300 p-2">Operador / Trabajador Asignado</th>
+                                        <th class="border border-slate-300 p-2">Tiempo Unitario (Hrs)</th>
+                                        <th class="border border-slate-300 p-2">Costo Hora Hombre (CHH)</th>
+                                        <th class="border border-slate-300 p-2">Costo Incurrido MO</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tb-cedula-mo"></tbody>
+                                <tfoot class="bg-slate-100 font-bold border-t-2 border-slate-400">
+                                    <tr>
+                                        <td colspan="4" class="border border-slate-300 p-2 text-right">TOTAL MANO DE OBRA DIRECTA (MOD):</td>
+                                        <td id="lbl-cedula-total-mo" class="border border-slate-300 p-2 text-blue-900 font-extrabold">$0.00</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <div class="p-4 bg-blue-900 text-white rounded-lg flex justify-between items-center shadow-md">
+                            <div>
+                                <h4 id="lbl-cedula-titulo-prod" class="font-extrabold text-base">👓 COSTO UNITARIO TOTAL DE FABRICACIÓN - LENTE GRADUADO</h4>
+                                <p class="text-[11px] text-blue-200">Integración de Costos Incurridos (MPD + MPI + MOD)</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs uppercase font-semibold text-blue-200">Costo Unitario Final:</span>
+                                <p id="lbl-cedula-costo-final" class="text-3xl font-extrabold text-emerald-400">$0.00 MXN</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
         </main>
     </div>
 
-    <!-- SDKs de Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -183,6 +360,5 @@
 
     <script src="js/engine.js"></script>
     <script src="js/app.js"></script>
-
 </body>
 </html>
