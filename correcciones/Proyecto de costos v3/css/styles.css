@@ -1,0 +1,12 @@
+/* Estilos complementarios sobre Tailwind CSS */
+table th, table td {
+    white-space: nowrap;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f8fafc;
+}
+
+tbody tr:hover {
+    background-color: #f1f5f9;
+}
