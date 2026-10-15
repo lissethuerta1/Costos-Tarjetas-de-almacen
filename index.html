@@ -3,224 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Costos de Fabricación - Lentes</title>
+    <title>ERP de Costos Industriales - OptiCost</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Librería para generación automática de Código QR en Cédulas Imprimibles -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="stylesheet" href="css/styles.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
 
+    <!-- LOGIN -->
     <div id="login-screen" class="flex items-center justify-center min-h-screen">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md border border-slate-200">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md border border-slate-200">
             <div class="text-center mb-6">
-                <h1 class="text-2xl font-bold text-blue-900">Control de Costos</h1>
-                <p class="text-sm text-slate-500">Fábrica de Óptica y Armazones</p>
+                <span class="text-4xl">👓</span>
+                <h1 class="text-2xl font-black text-blue-950 mt-2">OptiCost ERP</h1>
+                <p class="text-xs text-slate-500 font-semibold">Sistema de Costos de Fabricación de Lentes</p>
             </div>
             <form id="login-form" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1">Usuario</label>
-                    <input type="text" id="username" value="admin" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-800 focus:outline-none" required>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Usuario de Acceso</label>
+                    <input type="text" id="username" value="admin" class="w-full p-2.5 border rounded-lg text-sm font-semibold focus:ring-2 focus:ring-blue-900 focus:outline-none" required>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Contraseña</label>
-                    <input type="password" id="password" value="1234" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-800 focus:outline-none" required>
+                    <input type="password" id="password" value="1234" class="w-full p-2.5 border rounded-lg text-sm font-semibold focus:ring-2 focus:ring-blue-900 focus:outline-none" required>
                 </div>
-                <div id="login-error" class="text-red-600 text-xs hidden">Credenciales incorrectas (admin / 1234)</div>
-                <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2 rounded shadow transition">Ingresar al Sistema</button>
+                <div id="login-error" class="text-red-600 text-xs hidden font-bold">Credenciales inválidas (admin / 1234)</div>
+                <button type="submit" class="w-full bg-blue-950 hover:bg-blue-900 text-white font-bold py-2.5 rounded-lg shadow-md transition text-sm">Ingresar al ERP</button>
             </form>
         </div>
     </div>
 
+    <!-- PANTALLA PRINCIPAL DEL SISTEMA -->
     <div id="app-screen" class="hidden">
-        <nav class="bg-blue-900 text-white px-6 py-3 flex justify-between items-center shadow-md sticky top-0 z-50">
+        <nav class="bg-blue-950 text-white px-6 py-3 flex justify-between items-center shadow-lg sticky top-0 z-50">
             <div class="flex items-center space-x-3">
                 <span class="text-2xl">👓</span>
                 <div>
-                    <h1 class="text-lg font-bold tracking-wide">Fábrica de Lentes - Sistema de Costos</h1>
-                    <p class="text-xs text-blue-200">Contabilidad de Costos (MPD + MOD)</p>
+                    <h1 class="text-base font-black tracking-wide">FÁBRICA DE LENTES - COSTOS INDUSTRIALES</h1>
+                    <p class="text-[10px] text-blue-300 font-semibold">Materia Prima + Mano de Obra + Gastos Indirectos (Prorrateos)</p>
                 </div>
             </div>
             
-            <div class="flex space-x-2 bg-blue-950 p-1 rounded-lg">
-                <button onclick="switchModule('config')" id="nav-config" class="px-3 py-1.5 text-xs font-bold rounded transition bg-blue-800 text-white">⚙️ Configuración General</button>
-                <button onclick="switchModule('mp')" id="nav-mp" class="px-3 py-1.5 text-xs font-bold rounded transition text-blue-200 hover:text-white">📦 Materia Prima</button>
-                <button onclick="switchModule('mo')" id="nav-mo" class="px-3 py-1.5 text-xs font-bold rounded transition text-blue-200 hover:text-white">👷 Mano de Obra (CHH)</button>
-                <button onclick="switchModule('procesos')" id="nav-procesos" class="px-3 py-1.5 text-xs font-bold rounded transition text-blue-200 hover:text-white">🏭 Procesos y Operadores</button>
-                <button onclick="switchModule('reportes')" id="nav-reportes" class="px-3 py-1.5 text-xs font-bold rounded transition text-blue-200 hover:text-white">📑 Cédula de Integración</button>
+            <div class="flex space-x-1 bg-blue-900/60 p-1 rounded-xl">
+                <button onclick="switchModule('config')" id="nav-config" class="px-3 py-1.5 text-xs font-bold rounded-lg transition bg-blue-800 text-white">⚙️ Configuración</button>
+                <button onclick="switchModule('mp')" id="nav-mp" class="px-3 py-1.5 text-xs font-bold rounded-lg transition text-blue-200 hover:text-white">📦 Materia Prima</button>
+                <button onclick="switchModule('mo')" id="nav-mo" class="px-3 py-1.5 text-xs font-bold rounded-lg transition text-blue-200 hover:text-white">👷 Mano de Obra (CHH)</button>
+                <button onclick="switchModule('procesos')" id="nav-procesos" class="px-3 py-1.5 text-xs font-bold rounded-lg transition text-blue-200 hover:text-white">🏭 Rutas de Producción</button>
+                <button onclick="switchModule('prorrateo')" id="nav-prorrateo" class="px-3 py-1.5 text-xs font-bold rounded-lg transition text-blue-200 hover:text-white">📊 Prorrateos (GIF)</button>
+                <button onclick="switchModule('reportes')" id="nav-reportes" class="px-3 py-1.5 text-xs font-bold rounded-lg transition text-blue-200 hover:text-white">📑 Cédula de Integración</button>
             </div>
 
-            <button id="logout-btn" class="text-xs bg-red-800 hover:bg-red-700 px-3 py-1.5 rounded transition">Salir</button>
+            <button id="logout-btn" class="text-xs bg-red-900 hover:bg-red-800 px-3 py-1.5 rounded-lg transition font-bold">Cerrar Sesión</button>
         </nav>
 
         <main class="max-w-7xl mx-auto p-6 space-y-6">
 
+            <!-- CONFIGURACIÓN -->
             <div id="module-config" class="space-y-6">
-                <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
-                    <h2 class="text-base font-bold text-blue-900 mb-4 border-b pb-2">⚙️ Parámetros de Configuración General de la Empresa</h2>
-                    <form id="config-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <div class="md:col-span-3 bg-blue-50 p-3 rounded border border-blue-200">
-                            <label class="block text-xs font-bold text-blue-900 mb-1">Método de Valuación Institucional (Único para toda la empresa)</label>
-                            <select id="cfg-metodo-global" class="w-full p-2 border border-blue-300 rounded text-sm font-bold text-blue-900 bg-white">
+                <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center border-b pb-3 mb-4">
+                        <h2 class="text-base font-bold text-blue-950">⚙️ Parámetros Institucionales y Métodos de Valuación</h2>
+                        <span id="lock-badge-config" class="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-lg">🔒 Parámetros Bloqueados</span>
+                    </div>
+                    <form id="config-form" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="md:col-span-3 bg-blue-50/70 p-3.5 rounded-lg border border-blue-200">
+                            <label class="block text-xs font-bold text-blue-950 mb-1">Método Institucional de Inventario</label>
+                            <select id="cfg-metodo-global" class="w-full p-2 border border-blue-300 rounded-lg text-sm font-bold text-blue-950 bg-white">
                                 <option value="PEPS">PEPS (Primeras Entradas, Primeras Salidas)</option>
                                 <option value="UEPS">UEPS (Últimas Entradas, Primeras Salidas)</option>
                                 <option value="PROMEDIO">Precio Promedio Ponderado</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Días Laborados Efectivos al Año</label>
-                            <input type="number" id="cfg-dias-lab" value="302" class="w-full p-2 border rounded text-sm font-bold bg-slate-50" readonly>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Días Laborados Efectivos / Año</label>
+                            <input type="number" id="cfg-dias-lab" value="302" class="w-full p-2 border rounded-lg text-sm font-bold bg-slate-50" readonly>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">Jornada Laboral Diaria (Horas)</label>
-                            <input type="number" id="cfg-jornada" value="8" class="w-full p-2 border rounded text-sm font-bold bg-slate-50" readonly>
+                            <input type="number" id="cfg-jornada" value="8" class="w-full p-2 border rounded-lg text-sm font-bold bg-slate-50" readonly>
                         </div>
                         <div class="flex items-end">
-                            <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2 text-sm rounded transition">Guardar Configuración</button>
+                            <button type="submit" class="w-full bg-blue-950 hover:bg-blue-900 text-white font-bold py-2 text-sm rounded-lg transition">Guardar Parámetros</button>
                         </div>
                     </form>
-
-                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Prestaciones de Ley & Conquistas Laborales (Referencia del Excel)</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                        <div class="p-3 bg-slate-50 border rounded space-y-1">
-                            <p class="font-bold text-blue-900 border-b pb-1">Prestaciones Mínimas LFT</p>
-                            <div class="flex justify-between"><span>Aguinaldo:</span><span class="font-semibold">15 Días</span></div>
-                            <div class="flex justify-between"><span>Vacaciones (Base Ley):</span><span class="font-semibold">12 Días</span></div>
-                            <div class="flex justify-between"><span>Prima Vacacional:</span><span class="font-semibold">25%</span></div>
-                        </div>
-                        <div class="p-3 bg-slate-50 border rounded space-y-1">
-                            <p class="font-bold text-blue-900 border-b pb-1">Conquistas Laborales</p>
-                            <div class="flex justify-between"><span>Comedor (por comida):</span><span class="font-semibold">$48.00</span></div>
-                            <div class="flex justify-between"><span>Vales de Despensa (mensual):</span><span class="font-semibold">$1,200.00</span></div>
-                            <div class="flex justify-between"><span>Equipo de Protección (anual):</span><span class="font-semibold">$1,720.00</span></div>
-                        </div>
-                        <div class="p-3 bg-slate-50 border rounded space-y-1">
-                            <p class="font-bold text-blue-900 border-b pb-1">Previsión Social & Cargas Patronales</p>
-                            <div class="flex justify-between"><span>IMSS:</span><span class="font-semibold">4.00%</span></div>
-                            <div class="flex justify-between"><span>SAR:</span><span class="font-semibold">2.00%</span></div>
-                            <div class="flex justify-between"><span>INFONAVIT:</span><span class="font-semibold">5.00%</span></div>
-                            <div class="flex justify-between"><span>Impuesto s/ Nómina (ISN):</span><span class="font-semibold">3.00%</span></div>
-                        </div>
-                    </div>
                 </section>
             </div>
 
+            <!-- MATERIA PRIMA -->
             <div id="module-mp" class="hidden space-y-6">
-                <section class="bg-white p-5 rounded-lg shadow border border-blue-200">
-                    <div class="flex justify-between items-center mb-3">
-                        <div>
-                            <h2 class="text-base font-bold text-blue-900">Escáner de Código de Barras / QR</h2>
-                            <p class="text-xs text-slate-500">Escanea insumos o facturas para autocompletar</p>
-                        </div>
-                        <button id="toggle-scanner-btn" onclick="toggleCameraScanner()" class="bg-blue-900 hover:bg-blue-800 text-white font-bold text-xs px-3 py-2 rounded transition">
-                            Activar Cámara Escáner
-                        </button>
-                    </div>
-                    <div id="scanner-wrapper" class="hidden max-w-sm mx-auto border-2 border-dashed border-blue-400 p-2 rounded">
-                        <div id="reader" class="w-full"></div>
-                    </div>
-                </section>
-                
-                <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
-                    <h2 class="text-base font-bold text-blue-900 mb-4 border-b pb-2">1. Registrar Insumo de Lentes</h2>
+                <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-base font-bold text-blue-950 mb-4 border-b pb-2">1. Registro de Insumos de Almacén</h2>
                     <form id="product-form" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">Insumo</label>
-                            <input type="text" id="prod-name" placeholder="Ej. Micas Orgánicas CR-39" class="w-full p-2 border rounded text-sm" required>
+                            <input type="text" id="prod-name" placeholder="Ej. Micas Orgánicas CR-39" class="w-full p-2 border rounded-lg text-sm font-medium" required>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">Unidad de Medida</label>
-                            <input type="text" id="prod-unit" placeholder="Ej. Par, Pieza, Juego" class="w-full p-2 border rounded text-sm" required>
+                            <input type="text" id="prod-unit" placeholder="Ej. Par, Pieza, Juego" class="w-full p-2 border rounded-lg text-sm font-medium" required>
                         </div>
                         <div class="flex items-end">
-                            <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2 text-sm rounded transition">Guardar Insumo</button>
+                            <button type="submit" class="w-full bg-blue-950 hover:bg-blue-900 text-white font-bold py-2 text-sm rounded-lg transition">Guardar Insumo</button>
                         </div>
                     </form>
                 </section>
 
-                <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
-                    <h2 class="text-base font-bold text-blue-900 mb-4 border-b pb-2">2. Registrar Entrada / Salida</h2>
+                <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-base font-bold text-blue-950 mb-4 border-b pb-2">2. Movimiento de Almacén (Entradas / Salidas)</h2>
                     <form id="movement-form" class="grid grid-cols-1 md:grid-cols-6 gap-3">
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">Insumo</label>
-                            <select id="mov-product" class="w-full p-2 border rounded text-sm" required></select>
+                            <select id="mov-product" class="w-full p-2 border rounded-lg text-sm font-semibold" required></select>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">Fecha</label>
-                            <input type="date" id="mov-date" class="w-full p-2 border rounded text-sm" required>
+                            <input type="date" id="mov-date" class="w-full p-2 border rounded-lg text-sm" required>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">Referencia</label>
-                            <input type="text" id="mov-ref" placeholder="Ej. F-3010" class="w-full p-2 border rounded text-sm" required>
+                            <input type="text" id="mov-ref" placeholder="Ej. F-3010" class="w-full p-2 border rounded-lg text-sm" required>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Concepto / Proveedor</label>
-                            <input type="text" id="mov-concept" placeholder="Ej. Óptica Mayorista" class="w-full p-2 border rounded text-sm" required>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Concepto</label>
+                            <input type="text" id="mov-concept" placeholder="Ej. Compra Proveedor" class="w-full p-2 border rounded-lg text-sm" required>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Operación</label>
-                            <select id="mov-type" class="w-full p-2 border rounded text-sm" required>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Tipo</label>
+                            <select id="mov-type" class="w-full p-2 border rounded-lg text-sm font-bold" required>
                                 <option value="ENTRADA">Entrada</option>
                                 <option value="SALIDA">Salida</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">Cantidad</label>
-                            <input type="number" step="0.01" min="0.01" id="mov-qty" placeholder="0.00" class="w-full p-2 border rounded text-sm" required>
+                            <input type="number" step="0.01" id="mov-qty" placeholder="0.00" class="w-full p-2 border rounded-lg text-sm font-bold" required>
                         </div>
                         <div id="cost-container" class="md:col-span-2">
                             <label class="block text-xs font-bold text-slate-600 mb-1">Costo Unitario ($)</label>
-                            <input type="number" step="0.01" min="0.01" id="mov-cost" placeholder="0.00" class="w-full p-2 border rounded text-sm">
+                            <input type="number" step="0.01" id="mov-cost" placeholder="0.00" class="w-full p-2 border rounded-lg text-sm font-bold">
                         </div>
                         <div class="md:col-span-4 flex items-end">
-                            <button type="submit" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 text-sm rounded transition">Procesar Movimiento</button>
+                            <button type="submit" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 text-sm rounded-lg transition">Registrar Movimiento</button>
                         </div>
                     </form>
                 </section>
 
-                <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
+                <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold text-blue-900">Tarjetas de Almacén de Insumos</h2>
-                        <span id="active-method-badge" class="px-3 py-1 bg-blue-900 text-white font-bold text-xs rounded">Método Activo: PEPS</span>
+                        <h2 class="text-lg font-bold text-blue-950">Tarjetas de Almacén de Insumos</h2>
+                        <span id="active-method-badge" class="px-3 py-1 bg-blue-950 text-white font-bold text-xs rounded-lg">Método: PEPS</span>
                     </div>
                     <div id="cards-container" class="space-y-6"></div>
                 </section>
             </div>
 
+            <!-- MANO DE OBRA DIRECTA -->
             <div id="module-mo" class="hidden space-y-6">
-                <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
-                    <h2 class="text-base font-bold text-blue-900 mb-4 border-b pb-2">👷 Registrar Operador de Producción</h2>
+                <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-base font-bold text-blue-950 mb-4 border-b pb-2">👷 Registro de Personal Operativo de Planta</h2>
                     <form id="worker-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Puesto / Trabajador</label>
-                            <input type="text" id="wrk-name" placeholder="Ej. Oficial de Cizalla 1" class="w-full p-2 border rounded text-sm" required>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Nombre / Puesto</label>
+                            <input type="text" id="wrk-name" placeholder="Ej. Oficial Biselador CNC" class="w-full p-2 border rounded-lg text-sm font-medium" required>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Fecha de Ingreso</label>
-                            <input type="date" id="wrk-date" class="w-full p-2 border rounded text-sm" required>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Fecha Ingreso</label>
+                            <input type="date" id="wrk-date" class="w-full p-2 border rounded-lg text-sm" required>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Percepción Diaria Base ($)</label>
-                            <input type="number" step="0.01" id="wrk-wage" placeholder="Ej. 145.00" class="w-full p-2 border rounded text-sm" required>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Salario Diario Base ($)</label>
+                            <input type="number" step="0.01" id="wrk-wage" placeholder="Ej. 280.00" class="w-full p-2 border rounded-lg text-sm font-bold" required>
                         </div>
                         <div class="flex items-end">
-                            <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2 text-sm rounded transition">Calcular Costo Hora Hombre</button>
+                            <button type="submit" class="w-full bg-blue-950 hover:bg-blue-900 text-white font-bold py-2 text-sm rounded-lg transition">Calcular y Alta de Trabajador</button>
                         </div>
                     </form>
                 </section>
 
-                <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
-                    <h2 class="text-xl font-bold text-blue-900 mb-4">Tabla de Costos de Mano de Obra Directa (MOD)</h2>
+                <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-bold text-blue-950 mb-4">Plantilla de Trabajadores y Costo Hora Hombre (CHH)</h2>
                     <div class="overflow-x-auto">
                         <table class="w-full border-collapse border border-slate-300 text-xs text-center">
-                            <thead class="bg-blue-900 text-white font-bold">
+                            <thead class="bg-blue-950 text-white font-bold">
                                 <tr>
-                                    <th class="border border-slate-300 p-2">Trabajador / Puesto</th>
+                                    <th class="border border-slate-300 p-2 text-left">Puesto / Trabajador</th>
                                     <th class="border border-slate-300 p-2">Sueldo Diario</th>
                                     <th class="border border-slate-300 p-2">Sueldo Anual</th>
-                                    <th class="border border-slate-300 p-2">Prestaciones Ley</th>
+                                    <th class="border border-slate-300 p-2">Subtotal Ley</th>
                                     <th class="border border-slate-300 p-2">Cargas Patronales</th>
                                     <th class="border border-slate-300 p-2">Salario Integrado Anual</th>
-                                    <th class="border border-slate-300 p-2 bg-blue-950">Salario Integrado Diario</th>
+                                    <th class="border border-slate-300 p-2 bg-blue-900">Salario Integrado Diario</th>
                                     <th class="border border-slate-300 p-2 bg-emerald-700 text-white">Costo Hora Hombre (CHH)</th>
                                 </tr>
                             </thead>
@@ -230,107 +203,329 @@
                 </section>
             </div>
 
+            <!-- PROCESOS Y RUTAS DE FABRICACIÓN SEGREGADOS POR PRODUCTO -->
             <div id="module-procesos" class="hidden space-y-6">
-                <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
-                    <h2 class="text-base font-bold text-blue-900 mb-4 border-b pb-2">🏭 Registrar Nuevo Proceso / Estación de Trabajo</h2>
-                    <form id="process-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <section class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center border-b pb-3 mb-4">
+                        <div>
+                            <h2 class="text-base font-bold text-blue-950">🏭 Asignación de Rutas de Producción por Producto</h2>
+                            <p class="text-xs text-slate-500">Define qué estaciones, qué operador y qué tiempo específico utiliza cada producto (Evita sumar procesos no usados).</p>
+                        </div>
+                        <button id="btn-toggle-lock-procesos" onclick="toggleLockProcesos()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg transition">
+                            🔓 Desbloquear Configuración de Procesos
+                        </button>
+                    </div>
+
+                    <form id="process-form" class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Producto Destino</label>
+                            <select id="proc-product-key" class="w-full p-2 border rounded-lg text-xs font-bold bg-blue-50 text-blue-950">
+                                <option value="lente">👓 Lente Terminado Graduado (CR-39)</option>
+                                <option value="armazon">🕶️ Armazón de Acetato Inyectado</option>
+                                <option value="kit">🧼 Kit de Limpieza y Mantenimiento</option>
+                            </select>
+                        </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-600 mb-1">Nombre del Proceso</label>
-                            <input type="text" id="proc-name" placeholder="Ej. Biselado CNC" class="w-full p-2 border rounded text-sm" required>
+                            <input type="text" id="proc-name" placeholder="Ej. Biselado y Tallado CNC" class="w-full p-2 border rounded-lg text-xs font-medium" required>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Máquina / Equipo</label>
-                            <input type="text" id="proc-machine" placeholder="Ej. Biseladora 3D" class="w-full p-2 border rounded text-sm" required>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Maquinaria / Estación</label>
+                            <input type="text" id="proc-machine" placeholder="Ej. Biseladora Santinelli 3D" class="w-full p-2 border rounded-lg text-xs font-medium" required>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 mb-1">Tiempo Unitario (Horas)</label>
-                            <input type="number" step="0.01" id="proc-time" placeholder="Ej. 0.50" class="w-full p-2 border rounded text-sm" required>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Tiempo (Horas)</label>
+                            <input type="number" step="0.01" id="proc-time" placeholder="Ej. 0.35" class="w-full p-2 border rounded-lg text-xs font-bold" required>
                         </div>
                         <div class="flex items-end">
-                            <button type="submit" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-2 text-sm rounded transition">Guardar Proceso</button>
+                            <button type="submit" id="btn-add-proc" class="w-full bg-blue-950 hover:bg-blue-900 text-white font-bold py-2 text-xs rounded-lg transition">Agregar a Ruta</button>
                         </div>
                     </form>
-                </section>
 
-                <section class="bg-white p-5 rounded-lg shadow border border-slate-200">
-                    <h2 class="text-xl font-bold text-blue-900 mb-4">Estaciones de Trabajo y Operadores Asignados</h2>
+                    <!-- Selector de Vista de Ruta -->
+                    <div class="mb-4 flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-700">Ver Ruta del Producto:</label>
+                        <select id="filter-ruta-product" onchange="renderProcesosModule()" class="p-1.5 border rounded-lg text-xs font-bold bg-white text-slate-900">
+                            <option value="lente">👓 Lente Graduado</option>
+                            <option value="armazon">🕶️ Armazón Acetato</option>
+                            <option value="kit">🧼 Kit Limpieza</option>
+                        </select>
+                    </div>
+
                     <div id="procesos-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs"></div>
                 </section>
             </div>
 
+            <!-- PRORRATEO (GIF) -->
+            <div id="module-prorrateo" class="hidden space-y-6">
+                <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <div class="border-b pb-3 mb-4">
+                        <h2 class="text-xl font-black text-blue-950">📊 MÓDULO DE PRORRATEO DE GASTOS INDIRECTOS DE FABRICACIÓN (GIF)</h2>
+                        <p class="text-xs text-slate-500 font-medium">Distribución de Gastos Generales conforme al consumo e infraestructura (Notas de Clase)</p>
+                    </div>
+
+                    <!-- 1. PRORRATEO PRIMARIO -->
+                    <div class="space-y-3 mb-8">
+                        <h3 class="font-bold text-sm text-blue-900 border-b pb-1">1. PRORRATEO PRIMARIO (Distribución entre Departamentos por 215 m^2$ e Instalaciones)</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse border border-slate-300 text-xs text-center">
+                                <thead class="bg-slate-800 text-white font-bold">
+                                    <tr>
+                                        <th class="border border-slate-300 p-2 text-left">Gasto / Concepto</th>
+                                        <th class="border border-slate-300 p-2">Base / Factor</th>
+                                        <th class="border border-slate-300 p-2 bg-blue-900 text-white">Producción (110 m²)</th>
+                                        <th class="border border-slate-300 p-2">Admon (40 m²)</th>
+                                        <th class="border border-slate-300 p-2">Ventas (15 m²)</th>
+                                        <th class="border border-slate-300 p-2">RH (10 m²)</th>
+                                        <th class="border border-slate-300 p-2">Distr (40 m²)</th>
+                                        <th class="border border-slate-300 p-2">Total ($)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tb-prorrateo-primario" class="divide-y divide-slate-200 font-medium"></tbody>
+                                <tfoot class="bg-slate-100 font-bold">
+                                    <tr id="tr-totales-primario"></tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 2. PRORRATEO SECUNDARIO -->
+                    <div class="space-y-3 mb-8">
+                        <h3 class="font-bold text-sm text-blue-900 border-b pb-1">2. PRORRATEO SECUNDARIO (Distribución de Centros de Servicios a Operación)</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse border border-slate-300 text-xs text-center">
+                                <thead class="bg-slate-800 text-white font-bold">
+                                    <tr>
+                                        <th class="border border-slate-300 p-2 text-left">Centro de Servicio Cedente</th>
+                                        <th class="border border-slate-300 p-2">Monto Total ($)</th>
+                                        <th class="border border-slate-300 p-2">Base de Distribución</th>
+                                        <th class="border border-slate-300 p-2 bg-blue-900 text-white">Producción</th>
+                                        <th class="border border-slate-300 p-2">Ventas</th>
+                                        <th class="border border-slate-300 p-2">Distribución</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tb-prorrateo-secundario" class="divide-y divide-slate-200 font-medium"></tbody>
+                                <tfoot class="bg-slate-100 font-bold">
+                                    <tr id="tr-totales-secundario"></tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 3. PRORRATEO FINAL -->
+                    <div class="space-y-3">
+                        <h3 class="font-bold text-sm text-blue-900 border-b pb-1">3. PRORRATEO FINAL (Cálculo de Tasa/Cuota GIF para la Hoja de Costos)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-4 bg-blue-50 border border-blue-200 rounded-xl space-y-2">
+                                <span class="font-extrabold text-blue-950 text-xs uppercase">Opción A: Cuota GIF por Producto Fabricado</span>
+                                <div class="flex justify-between text-xs"><span>Gastos Indirectos Fab. Totales (GIF):</span><span id="lbl-gif-total-a" class="font-bold">$0.00</span></div>
+                                <div class="flex justify-between text-xs"><span>Lote Estándar de Producción:</span><span class="font-bold">1,000 Unidades</span></div>
+                                <div class="flex justify-between text-sm font-extrabold text-blue-950 border-t pt-1"><span>Tasa GIF Unitario por Producto:</span><span id="lbl-tasa-gif-unidad" class="text-emerald-700">$0.00 / pza</span></div>
+                            </div>
+
+                            <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2">
+                                <span class="font-extrabold text-emerald-950 text-xs uppercase">Opción B: Cuota GIF por Hora Efectiva Laborada</span>
+                                <div class="flex justify-between text-xs"><span>Gastos Indirectos Fab. Totales (GIF):</span><span id="lbl-gif-total-b" class="font-bold">$0.00</span></div>
+                                <div class="flex justify-between text-xs"><span>Horas Hombre Efectivas de Fábrica:</span><span class="font-bold">1,450 Horas</span></div>
+                                <div class="flex justify-between text-sm font-extrabold text-emerald-950 border-t pt-1"><span>Tasa GIF por Hora Hombre:</span><span id="lbl-tasa-gif-hora" class="text-emerald-700">$0.00 / hr</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- CÉDULA DE INTEGRACIÓN TOTAL CON CÓDIGO QR REINCORPORADO -->
             <div id="module-reportes" class="hidden space-y-6">
-                <section class="bg-white p-6 rounded-lg shadow border border-slate-200">
+                <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b pb-4 gap-4">
                         <div>
-                            <h2 class="text-xl font-extrabold text-blue-900">CÉDULA DE INTEGRACIÓN DEL COSTO DE PRODUCCIÓN</h2>
-                            <p class="text-xs text-slate-500">Cálculo del Costo de Fabricación basado en la Hoja del Excel del Profesor</p>
+                            <h2 class="text-xl font-black text-blue-950">CÉDULA DE INTEGRACIÓN DEL COSTO DE PRODUCCIÓN</h2>
+                            <p class="text-xs text-slate-500 font-semibold">Resumen Unificado: MPD + MOD + GIF (Consolidado Específico por Producto)</p>
                         </div>
                         
                         <div class="flex items-center space-x-3 w-full md:w-auto">
-                            <select id="select-producto-costeo" onchange="actualizarCedulaProducto()" class="p-2 border border-blue-900 rounded text-xs font-bold bg-blue-50 text-blue-900">
+                            <select id="select-producto-costeo" onchange="actualizarCedulaProducto()" class="p-2.5 border border-blue-900 rounded-lg text-xs font-bold bg-blue-50 text-blue-950">
                                 <option value="lente">👓 Lente Terminado Graduado (CR-39)</option>
                                 <option value="armazon">🕶️ Armazón de Acetato Inyectado</option>
-                                <option value="kit">SOLUCIÓN Y KIT DE LIMPIEZA</option>
+                                <option value="kit">🧼 Kit de Limpieza y Mantenimiento</option>
                             </select>
-                            <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3 py-2 rounded transition whitespace-nowrap">
+                            <button onclick="window.print()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition">
                                 🖨️ Imprimir Cédula
                             </button>
                         </div>
                     </div>
 
                     <div class="space-y-6 text-xs">
+                        <!-- 1. MATERIA PRIMA -->
                         <div>
-                            <h3 class="font-bold text-sm text-blue-900 mb-2 border-b pb-1">1. CONSOLIDADO DE MATERIA PRIMA (MPD / MPI)</h3>
+                            <h3 class="font-bold text-sm text-blue-950 mb-2 border-b pb-1">1. CONSOLIDADO DE MATERIA PRIMA (MPD / MPI)</h3>
                             <table class="w-full border-collapse border border-slate-300 text-center">
                                 <thead class="bg-slate-100 font-bold">
                                     <tr>
                                         <th class="border border-slate-300 p-2 text-left">Insumo Requerido</th>
                                         <th class="border border-slate-300 p-2">Tipo</th>
-                                        <th class="border border-slate-300 p-2">Consumo en Unidades</th>
-                                        <th class="border border-slate-300 p-2">Costo Incurred / Unitario</th>
-                                        <th class="border border-slate-300 p-2">Costo Total MP</th>
+                                        <th class="border border-slate-300 p-2">Consumo Unitario</th>
+                                        <th class="border border-slate-300 p-2">Costo Unitario Insumo</th>
+                                        <th class="border border-slate-300 p-2">Costo Incurrito MP</th>
                                     </tr>
                                 </thead>
-                                <tbody id="tb-cedula-mp"></tbody>
-                                <tfoot class="bg-slate-100 font-bold border-t-2 border-slate-400">
+                                <tbody id="tb-cedula-mp" class="font-medium"></tbody>
+                                <tfoot class="bg-slate-100 font-bold">
                                     <tr>
-                                        <td colspan="4" class="border border-slate-300 p-2 text-right">TOTAL MATERIA PRIMA (MPD + MPI):</td>
-                                        <td id="lbl-cedula-total-mp" class="border border-slate-300 p-2 text-blue-900 font-extrabold">$0.00</td>
+                                        <td colspan="4" class="border border-slate-300 p-2 text-right">TOTAL MATERIA PRIMA:</td>
+                                        <td id="lbl-cedula-total-mp" class="border border-slate-300 p-2 text-blue-950 font-extrabold">$0.00</td>
                                     </tr>
                                 </tfoot>
                             </table>
                         </div>
 
+                        <!-- 2. MANO DE OBRA DIRECTA -->
                         <div>
-                            <h3 class="font-bold text-sm text-blue-900 mb-2 border-b pb-1">2. CONSOLIDADO DE MANO DE OBRA DIRECTA (MOD POR PROCESO Y OPERADOR)</h3>
+                            <h3 class="font-bold text-sm text-blue-950 mb-2 border-b pb-1">2. CONSOLIDADO DE MANO DE OBRA DIRECTA (MOD) - RUTA ESPECÍFICA</h3>
                             <table class="w-full border-collapse border border-slate-300 text-center">
                                 <thead class="bg-slate-100 font-bold">
                                     <tr>
-                                        <th class="border border-slate-300 p-2 text-left">Proceso / Estación</th>
-                                        <th class="border border-slate-300 p-2">Operador / Trabajador Asignado</th>
+                                        <th class="border border-slate-300 p-2 text-left">Proceso / Estación Real</th>
+                                        <th class="border border-slate-300 p-2">Operador Asignado</th>
                                         <th class="border border-slate-300 p-2">Tiempo Unitario (Hrs)</th>
-                                        <th class="border border-slate-300 p-2">Costo Hora Hombre (CHH)</th>
-                                        <th class="border border-slate-300 p-2">Costo Incurrido MO</th>
+                                        <th class="border border-slate-300 p-2">CHH ($)</th>
+                                        <th class="border border-slate-300 p-2">Costo Incurrito MO</th>
                                     </tr>
                                 </thead>
-                                <tbody id="tb-cedula-mo"></tbody>
-                                <tfoot class="bg-slate-100 font-bold border-t-2 border-slate-400">
+                                <tbody id="tb-cedula-mo" class="font-medium"></tbody>
+                                <tfoot class="bg-slate-100 font-bold">
                                     <tr>
-                                        <td colspan="4" class="border border-slate-300 p-2 text-right">TOTAL MANO DE OBRA DIRECTA (MOD):</td>
-                                        <td id="lbl-cedula-total-mo" class="border border-slate-300 p-2 text-blue-900 font-extrabold">$0.00</td>
+                                        <td colspan="4" class="border border-slate-300 p-2 text-right">TOTAL MANO DE OBRA DIRECTA:</td>
+                                        <td id="lbl-cedula-total-mo" class="border border-slate-300 p-2 text-blue-950 font-extrabold">$0.00</td>
                                     </tr>
                                 </tfoot>
                             </table>
                         </div>
 
-                        <div class="p-4 bg-blue-900 text-white rounded-lg flex justify-between items-center shadow-md">
-                            <div>
-                                <h4 id="lbl-cedula-titulo-prod" class="font-extrabold text-base">👓 COSTO UNITARIO TOTAL DE FABRICACIÓN - LENTE GRADUADO</h4>
-                                <p class="text-[11px] text-blue-200">Integración de Costos Incurridos (MPD + MPI + MOD)</p>
+                        <!-- 3. GASTOS INDIRECTOS DE FABRICACIÓN -->
+                        <div>
+                            <h3 class="font-bold text-sm text-blue-950 mb-2 border-b pb-1">3. GASTOS INDIRECTOS DE FABRICACIÓN APLICADOS (GIF - PRORRATEO FINAL)</h3>
+                            <table class="w-full border-collapse border border-slate-300 text-center">
+                                <thead class="bg-slate-100 font-bold">
+                                    <tr>
+                                        <th class="border border-slate-300 p-2 text-left">Base de Aplicación GIF</th>
+                                        <th class="border border-slate-300 p-2">Cuota / Tasa Calculada</th>
+                                        <th class="border border-slate-300 p-2">Tiempo Total de Ruta</th>
+                                        <th class="border border-slate-300 p-2">Costo Incurrito GIF</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="border border-slate-300 p-2 text-left font-semibold">GIF Prorrateado por Horas Hombre de Fabricación</td>
+                                        <td id="lbl-cedula-gif-tasa" class="border border-slate-300 p-2 font-bold">$0.00 / hr</td>
+                                        <td id="lbl-cedula-gif-tiempo" class="border border-slate-300 p-2">0.00 hrs</td>
+                                        <td id="lbl-cedula-total-gif" class="border border-slate-300 p-2 font-bold text-blue-950">$0.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- METRICAS DE COSTO SEGÚN APUNTES -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+                            <div class="p-3.5 bg-slate-50 border rounded-lg space-y-1">
+                                <span class="font-bold text-slate-700 text-xs uppercase">Costo Primo (MP + MO)[cite: 3]</span>
+                                <p id="lbl-costo-primo" class="text-2xl font-extrabold text-blue-900">$0.00 MXN</p>
                             </div>
-                            <div class="text-right">
-                                <span class="text-xs uppercase font-semibold text-blue-200">Costo Unitario Final:</span>
-                                <p id="lbl-cedula-costo-final" class="text-3xl font-extrabold text-emerald-400">$0.00 MXN</p>
+                            <div class="p-3.5 bg-slate-50 border rounded-lg space-y-1">
+                                <span class="font-bold text-slate-700 text-xs uppercase">Costo de Transformación (MO + GIF)[cite: 3]</span>
+                                <p id="lbl-costo-transformacion" class="text-2xl font-extrabold text-indigo-900">$0.00 MXN</p>
+                            </div>
+                        </div>
+
+                        <!-- RESUMEN FINAL CON CÓDIGO QR INDUSTRIAL -->
+                        <div class="p-5 bg-blue-950 text-white rounded-xl flex justify-between items-center shadow-lg gap-4">
+                            <div>
+                                <h4 id="lbl-cedula-titulo-prod" class="font-black text-lg">👓 COSTO UNITARIO TOTAL DE FABRICACIÓN - LENTE GRADUADO</h4>
+                                <p class="text-xs text-blue-300 font-medium">Fórmula: Costo Total = MPD + MOD + GIF Prorrateado[cite: 3]</p>
+                                <span class="text-[10px] text-blue-400 mt-1 block">Sello Digital de Validación Auditada</span>
+                            </div>
+                            
+                            <div class="flex items-center space-x-4">
+                                <div class="text-right">
+                                    <span class="text-xs uppercase font-bold text-blue-300">Costo Unitario Total:</span>
+                                    <p id="lbl-cedula-costo-final" class="text-3xl font-black text-emerald-400">$0.00 MXN</p>
+                                </div>
+                                <!-- CÓDIGO QR GENERADO DINÁMICAMENTE -->
+                                <div class="bg-white p-1.5 rounded-lg border border-slate-300 shadow-sm">
+                                    <div id="qrcode-container"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                         <!-- NOTA TÉCNICA PEDAGÓGICA PARA EL PROFESOR -->
+                        <div class="p-5 bg-amber-50 border border-amber-300 rounded-xl space-y-4 text-slate-800">
+                            <div>
+                                <h5 class="font-bold text-amber-950 text-sm uppercase border-b border-amber-200 pb-1">
+                                    📌 NOTA TÉCNICA Y METODOLOGÍA DE CÁLCULO DE COSTOS INDUSTRIALES
+                                </h5>
+                                <p class="text-xs text-amber-900 mt-1 font-medium">
+                                    Explicación detallada del flujo contable, prorrateos y asignación de costos aplicados en este sistema.
+                                </p>
+                            </div>
+
+                            <!-- 1. PRORRATEO DE GASTOS INDIRECTOS -->
+                            <div class="space-y-2 text-xs">
+                                <h6 class="font-bold text-blue-950 text-xs uppercase">1. Módulo de Prorrateos (Gastos Indirectos de Fabricación - GIF)</h6>
+                                
+                                <div class="bg-white p-3 rounded-lg border border-amber-200 space-y-1.5">
+                                    <p class="font-bold text-slate-900">Paso A: Prorrateo Primario (Distribución por Uso de Instalaciones)</p>
+                                    <p class="text-slate-700 leading-relaxed">
+                                        • <strong>Renta de Nave ($50,000.00):</strong> Se divide entre los 215 m² totales para obtener el costo por metro cuadrado y se multiplica por la superficie de cada área (Producción ocupa 110 m², absorbiendo la mayor proporción).<br>
+                                        • <strong>Energía Eléctrica ($22,000.00):</strong> Se divide en Fuerza Motriz ($15,840.00 equivalente al 72%, cargado directo a Producción por la maquinaria) e Iluminación ($6,160.00 equivalente al 28%, distribuido por m²).<br>
+                                        • <strong>Agua Potable ($2,300.00):</strong> Distribuida proporcionalmente entre todos los departamentos por m².<br>
+                                        • <strong>Gasolina ($2,200.00):</strong> Asignada 100% al departamento de Distribución.<br>
+                                        • <strong>Licencias Sanitarias ($5,000.00):</strong> Carga directa al área de Producción.<br>
+                                        <em>Resultado del Paso A:</em> Costo primario directo acumulado en Producción = $56,013.95.
+                                    </p>
+                                </div>
+
+                                <div class="bg-white p-3 rounded-lg border border-amber-200 space-y-1.5">
+                                    <p class="font-bold text-slate-900">Paso B: Prorrateo Secundario (Recosteo de Departamentos de Servicio)</p>
+                                    <p class="text-slate-700 leading-relaxed">
+                                        • <strong>Recursos Humanos:</strong> Su costo se transfiere según el número de trabajadores (Producción tiene 12 de los 18 empleados, por lo que absorbe el 66.6% del servicio de RH).<br>
+                                        • <strong>Administración General:</strong> El 70% de su gasto acumulado se transfiere a Producción por la supervisión de la operación de fábrica.<br>
+                                        <em>Resultado del Paso B:</em> Gran Total de Gastos Indirectos de Fabricación (GIF) = $60,188.85.
+                                    </p>
+                                </div>
+
+                                <div class="bg-white p-3 rounded-lg border border-amber-200 space-y-1.5">
+                                    <p class="font-bold text-slate-900">Paso C: Prorrateo Final (Cálculo de la Cuota GIF por Hora)</p>
+                                    <p class="text-slate-700 leading-relaxed">
+                                        • <strong>Fórmula:</strong> Gastos Indirectos Totales de Producción ÷ Horas Hombre Efectivas de Fábrica ($60,188.85 ÷ 1,450 horas al mes).<br>
+                                        • <strong>Resultado:</strong> Tasa o Cuota GIF = $41.51 por cada hora de fabricación.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- 2. CÉDULA DE INTEGRACIÓN -->
+                            <div class="space-y-2 text-xs">
+                                <h6 class="font-bold text-blue-950 text-xs uppercase">2. Integración del Costo Unitario Final por Producto</h6>
+                                
+                                <div class="bg-white p-3 rounded-lg border border-amber-200 space-y-1.5">
+                                    <p class="font-bold text-slate-900">Materia Prima (MP):</p>
+                                    <p class="text-slate-700">Toma el costo actualizado del almacén mediante el método activo (PEPS, UEPS o Promedio). Ejemplo Lente: Micas ($120.00) + Armazón Base ($85.00) + Estuche ($15.00) = $220.00 de Materia Prima.</p>
+                                    
+                                    <p class="font-bold text-slate-900 pt-1">Mano de Obra Directa (MO):</p>
+                                    <p class="text-slate-700">Multiplica el tiempo real de cada estación de la ruta del producto por el Costo Hora Hombre (CHH) del operador asignado.<br>
+                                    Ejemplo Lente (Ruta Completa 1.05 horas): Corte ($10.93) + Biselado CNC ($15.38) + Antirreflejante ($10.08) + Ajuste ($5.51) + Calidad ($3.40) = $45.29 de Mano de Obra.</p>
+                                    
+                                    <p class="font-bold text-slate-900 pt-1">Gastos Indirectos Aplicados (GIF):</p>
+                                    <p class="text-slate-700">Multiplica el tiempo acumulado en la ruta del producto por la Tasa GIF por Hora.<br>
+                                    Ejemplo Lente: 1.05 horas × $41.51 por hora = $43.59 de GIF Aplicado.</p>
+                                </div>
+                            </div>
+
+                            <!-- 3. FÓRMULAS RESUMEN -->
+                            <div class="space-y-1 text-xs bg-amber-100/60 p-3 rounded-lg border border-amber-300">
+                                <h6 class="font-bold text-amber-950 uppercase text-[11px]">3. Indicadores Financieros Integrados:</h6>
+                                <p class="text-slate-800">1. <strong>Costo Primo:</strong> Materia Prima + Mano de Obra Directa (Representa los insumos e inversión humana indispensable).</p>
+                                <p class="text-slate-800">2. <strong>Costo de Transformación:</strong> Mano de Obra Directa + Gastos Indirectos de Fabricación (Representa lo que cuesta procesar la materia prima dentro de la planta).</p>
+                                <p class="text-slate-800">3. <strong>Costo Total Unitario:</strong> Materia Prima + Mano de Obra Directa + Gastos Indirectos de Fabricación (Representa el costo real completo del producto terminado).</p>
                             </div>
                         </div>
                     </div>
@@ -340,9 +535,10 @@
         </main>
     </div>
 
+    <!-- SDKs de Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDgTCIyEHi7LGTpGUnUrJzQVntbVpZRv38",
@@ -355,7 +551,7 @@
 
         const app = initializeApp(firebaseConfig);
         window.db = getFirestore(app);
-        window.fs = { collection, addDoc, getDocs, query, where, onSnapshot };
+        window.fs = { collection, addDoc, getDocs, query, where, doc, updateDoc };
     </script>
 
     <script src="js/engine.js"></script>
